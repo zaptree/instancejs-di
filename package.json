@@ -1,0 +1,34 @@
+{
+  "name": "di",
+  "version": "0.0.1",
+  "description": "Node Dependency Injection",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zaptree/di.git"
+  },
+  "keywords": [
+    "dependency",
+    "injection",
+    "node"
+  ],
+  "author": "Jumaru",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zaptree/di/issues"
+  },
+  "homepage": "https://github.com/zaptree/di#readme",
+  "devDependencies": {
+    "chai": "^3.2.0"
+  },
+  "dependencies": {
+    "bluebird": "^2.9.34",
+    "lodash": "^3.10.1"
+  }
+}
