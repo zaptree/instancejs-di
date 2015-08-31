@@ -132,6 +132,35 @@ describe('Di', function(){
 			})
 	});
 
+
+	describe('createChild', function(){
+
+		it('should create child injector and be able to get/set modules',function(){
+			var injector = new Di();
+			// we need to make sure it can get a module from its parent
+			injector.set('simpleValue', 'hello');
+
+			var childInjector = injector.createChild();
+			childInjector.set('simpleValue2','hello2');
+
+			var grandchildInjector = childInjector.createChild();
+			grandchildInjector.set('simpleValue3','hello3');
+
+			return Promise.all([
+				grandchildInjector.get('simpleValue'),
+				grandchildInjector.get('simpleValue2'),
+				grandchildInjector.get('simpleValue3'),
+			])
+				.spread(function(simpleValue, simpleValue2, simpleValue3){
+					assert.equal(simpleValue, 'hello', 'it should return the value of simpleValue');
+					assert.equal(simpleValue2, 'hello2', 'it should return the value of simpleValue2');
+					assert.equal(simpleValue3, 'hello3', 'it should return the value of simpleValue3');
+				});
+
+
+		});
+
+	});
 	describe('types', function(){
 
 
@@ -157,6 +186,24 @@ describe('Di', function(){
 					assert.equal(val.newProperty,'new property', 'it should have property newProperty with value "new property"');
 				})
 		});
+		describe('static',function(){
+			it.only('should create a static type only once', function(){
+				var injector = new Di();
+				injector.set('static','random', function(){
+					return Math.random();
+				});
+
+				return Promise.all([
+					injector.get('random'),
+					injector.get('random')
+				])
+					.spread(function(timestamp1, timestamp2){
+						assert.equal(timestamp1, timestamp2, 'it should always return the same value for timestamps');
+					});
+
+			});
+		});
+
 	});
 
 });
