@@ -4,7 +4,7 @@ var Di = require('../index');
 var assert = require('chai').assert;
 var Promise = require('bluebird');
 
-describe('expermenting', function(){
+describe('Di', function(){
 
 	it('should create an instance of the injector', function(){
 
@@ -130,6 +130,33 @@ describe('expermenting', function(){
 			.then(function(val){
 				assert.deepEqual(val, 'hello async world', 'it should return the value of withAsyncDependencies when resolving the promise');
 			})
+	});
+
+	describe('types', function(){
+
+
+		it('should create a value specifying type and get the typed value in async mode', function(){
+			var injector = new Di({
+				types: {
+					testType:{
+						instantiate: 'static',
+						factory: function(){
+							return function(instance){
+								instance.newProperty = 'new property';
+								return instance;
+							}
+						}
+					}
+				}
+			});
+			injector.set('testType','typedValue', {'hello':'world'});
+
+			return injector.get('typedValue')
+				.then(function(val){
+					assert.equal(val.hello,'world', 'it should have property hello with value world');
+					assert.equal(val.newProperty,'new property', 'it should have property newProperty with value "new property"');
+				})
+		});
 	});
 
 });

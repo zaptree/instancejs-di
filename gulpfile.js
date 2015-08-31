@@ -2,12 +2,6 @@ var gulp = require('gulp');
 var mocha = require('gulp-mocha');
 var istanbul = require('gulp-istanbul');
 
-gulp.task('default', function () {
-	// place code for your default task here
-
-
-});
-
 gulp.task('test', function (done) {
 
 	gulp.src(['lib/**/*.js', 'index.js'])
@@ -17,8 +11,10 @@ gulp.task('test', function (done) {
 			gulp.src(['./tests/*.js'], {read: false})
 				.pipe(mocha())
 				.pipe(istanbul.writeReports()) // Creating the reports after tests ran
-				.pipe(istanbul.enforceThresholds({thresholds: {global: 90}})) // Enforce a coverage of at least 90%
+				.pipe(istanbul.enforceThresholds({thresholds: {global: 100}})) // Enforce a coverage of at least 100%
 				.on('end', done);
 		});
 
 });
+
+gulp.task('default', ['test']);

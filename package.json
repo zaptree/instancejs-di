@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "mocha test"
+    "test": "node node_modules/gulp/bin/gulp.js test"
   },
   "repository": {
     "type": "git",
