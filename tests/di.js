@@ -187,21 +187,27 @@ describe('Di', function(){
 				})
 		});
 		describe('static',function(){
-			it.only('should create a static type only once', function(){
+			it('should create a static type only once', function(){
 				var injector = new Di();
 				injector.set('static','random', function(){
 					return Math.random();
 				});
 
+				// fixme: the problem here is that we do both in parallel and the first one is not done when the second is asked for
 				return Promise.all([
 					injector.get('random'),
 					injector.get('random')
 				])
 					.spread(function(timestamp1, timestamp2){
 						assert.equal(timestamp1, timestamp2, 'it should always return the same value for timestamps');
+						assert(false, 'this test should not be for static but for type created to work like static and remove static from defaults');
 					});
 
 			});
+			it('should create static type only once even when called from different child injectors', function(){
+				assert(false,'implement this but without static (make custom type)');
+			});
+
 		});
 
 	});
