@@ -6,6 +6,9 @@ var Promise = require('bluebird');
 
 describe('Di', function(){
 
+	it('should not store promises because some libs cause memory leaks', function(){
+		assert(false, 'implement this feature');
+	});
 	it('should create an instance of the injector', function(){
 
 		var injector = new Di();
