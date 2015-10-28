@@ -7,6 +7,7 @@ var Promise = require('bluebird');
 describe('Di', function(){
 
 	it('should not store promises because some libs cause memory leaks', function(){
+		//todo also need to take into account race conditions which might get broken by not saving promises
 		assert(false, 'implement this feature');
 	});
 	it('should create an instance of the injector', function(){
