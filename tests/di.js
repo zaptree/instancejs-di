@@ -60,25 +60,64 @@ describe('Di', function(){
 			})
 	});
 
+	it('test constructor with promise', function(){
+		assert(false, 'implement this into actually using the injector');
+		class MyClass {
+			constructor(){
+				return Promise.resolve()
+					.bind(this)
+					.then(function(){
+						this.name = 'hello world';
+					})
+					// the promise must return whatever we want the module to resolve to, in most cases the class it's self
+					.return(this);
+			}
+		}
+		return (new MyClass())
+			.then(function(instance){
+				assert(instance.name === 'hello world')
+			});
+	});
+
+	it('should create a value with provided class in the array and get the value in async mode', function(){
+		var injector = new Di();
+
+		class MyClass{
+			constructor(){
+				this.name = 'I am a class';
+			}
+		}
+		injector.set('arrayClassConstructor', [MyClass]);
+
+		return injector.get('arrayClassConstructor')
+			.then(function(instance){
+				assert.deepEqual(instance.name, 'I am a class', 'it should return the instance of the class');
+			});
+	});
+
 	it('should create a value with provided constructor in the array and get the value in async mode', function(){
 		var injector = new Di();
-		var arr = [function(){ return 'world' }];
+		var arr = [function(){
+			this.hello = 'world'
+		}];
 		injector.set('arrayConstructor', arr);
 
 		return injector.get('arrayConstructor')
 			.then(function(val){
-				assert.deepEqual(val, 'world', 'it should return the value of arrayConstructor when resolving the promise');
+				assert.deepEqual(val.hello, 'world', 'it should return the value of arrayConstructor when resolving the promise');
 			})
 	});
 
 	it('should create a value with provided constructor with no array and get the value in async mode', function(){
 		var injector = new Di();
-		var arr = [function(){ return 'world' }];
-		injector.set('plainConstructor', arr);
+		var constructor = function(){
+			this.hello = 'world';
+		};
+		injector.set('plainConstructor', constructor);
 
 		return injector.get('plainConstructor')
 			.then(function(val){
-				assert.deepEqual(val, 'world', 'it should return the value of plainConstructor when resolving the promise');
+				assert.deepEqual(val.hello, 'world', 'it should return the value of plainConstructor when resolving the promise');
 			})
 	});
 
@@ -104,13 +143,13 @@ describe('Di', function(){
 		injector.set('withDependencies', [
 			'simpleValue',
 			function(simpleValue){
-				return simpleValue +' world';
+				this.value = simpleValue +' world';
 			}
 		]);
 
 		return injector.get('withDependencies')
 			.then(function(val){
-				assert.deepEqual(val, 'hello world', 'it should return the value of withDependencies when resolving the promise');
+				assert.deepEqual(val.value, 'hello world', 'it should return the value of withDependencies when resolving the promise');
 			})
 	});
 
@@ -119,6 +158,7 @@ describe('Di', function(){
 		injector.set('asyncValue', function(){
 			return new Promise(function(resolve){
 				setTimeout(function(){
+					// normally we cant return non-object values but if it is a promise we can
 					resolve('hello async');
 				},10);
 			});
@@ -126,13 +166,13 @@ describe('Di', function(){
 		injector.set('withAsyncDependencies', [
 			'asyncValue',
 			function(asyncValue){
-				return asyncValue +' world';
+				this.value = asyncValue +' world';
 			}
 		]);
 
 		return injector.get('withAsyncDependencies')
 			.then(function(val){
-				assert.deepEqual(val, 'hello async world', 'it should return the value of withAsyncDependencies when resolving the promise');
+				assert.deepEqual(val.value, 'hello async world', 'it should return the value of withAsyncDependencies when resolving the promise');
 			})
 	});
 
