@@ -196,6 +196,30 @@ describe('Di', function(){
 
 	describe('createChild', function(){
 
+		it('should inherit options from parent', function(){
+			var injector = new Di({
+				types: {
+					testType: {
+						singleton: true
+					}
+				}
+			});
+
+			var childInjector = injector.createChild({
+				types: {
+					childTestType: {
+						singleton: true
+					}
+				}
+			});
+
+			assert.isObject(injector.options.types.testType, 'injector should have testType');
+			assert.isUndefined(injector.options.types.childTestType, 'injector should not have childTestType');
+
+			assert.isObject(childInjector.options.types.testType, 'Child injector should have testType inherited');
+			assert.isObject(childInjector.options.types.childTestType, 'Child injector should have childTestType');
+
+		});
 		it('should create child injector and be able to get/set modules',function(){
 			var injector = new Di();
 			// we need to make sure it can get a module from its parent
@@ -210,7 +234,7 @@ describe('Di', function(){
 			return Promise.all([
 				grandchildInjector.get('simpleValue'),
 				grandchildInjector.get('simpleValue2'),
-				grandchildInjector.get('simpleValue3'),
+				grandchildInjector.get('simpleValue3')
 			])
 				.spread(function(simpleValue, simpleValue2, simpleValue3){
 					assert.equal(simpleValue, 'hello', 'it should return the value of simpleValue');
@@ -223,148 +247,151 @@ describe('Di', function(){
 
 	});
 	describe('types', function(){
+		var factorySpy,
+			factoryMethod;
+
+		beforeEach(function(){
+			factorySpy = sinon.spy(Di.prototype.defaultFactory);
+			factoryMethod = function(){
+				//return factorySpy = sinon.spy(Di.prototype.defaultFactory);
+				return factorySpy;
+			};
+		});
+
+		it('should create a simple value using a specified type', function(){
+			var injector = new Di();
+			injector.set('create', 'simpleValue', 'hello');
+
+			return injector.get('simpleValue')
+				.then(function(val){
+					assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
+				});
+		});
+		it('should throw an error when using a type that does not exist', function(){
+			var injector = new Di();
+			var run = function(){
+				injector.set('unknownType', 'simpleValue', 'hello');
+			};
+			assert.throws(run, Error, "Type unknownType is not defined");
 
 
-		it('should create a value specifying type and get the typed value in async mode', function(){
+		});
+
+		it('should use factory method specified in type', function(){
 			var injector = new Di({
 				types: {
-					testType:{
-						instantiate: 'static',
-						factory: function(){
-							return function(instance){
-								instance.newProperty = 'new property';
-								return instance;
-							}
-						}
+					'testType': {
+						singleton: true,
+						scope: '/',
+						factory: factoryMethod
 					}
 				}
 			});
-			injector.set('testType','typedValue', {'hello':'world'});
+			injector.set('testType', 'simpleValue', 'hello');
 
-			return injector.get('typedValue')
+			return injector.get('simpleValue')
 				.then(function(val){
-					assert.equal(val.hello,'world', 'it should have property hello with value world');
-					assert.equal(val.newProperty,'new property', 'it should have property newProperty with value "new property"');
-				})
-		});
-		describe('types',function(){
-			var factorySpy,
-				factoryMethod;
-
-			beforeEach(function(){
-				factoryMethod = function(){
-					return factorySpy = sinon.spy(Di.prototype.defaultFactory);
-				};
-			});
-
-			it('should create a simple value using a specified type', function(){
-				var injector = new Di();
-				injector.set('create', 'simpleValue', 'hello');
-
-				return injector.get('simpleValue')
-					.then(function(val){
-						assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
-					});
-			});
-			it('should throw an error when using a type that does not exist', function(){
-				var injector = new Di();
-				var run = function(){
-					injector.set('unknownType', 'simpleValue', 'hello');
-				};
-				assert.throws(run, Error, "Type unknownType is not defined");
-
-
-			});
-
-			it('should use factory method specified in type', function(){
-				var injector = new Di({
-					types: {
-						'testType': {
-							singleton: true,
-							scope: '/',
-							factory: factoryMethod
-						}
-					}
+					assert(factorySpy.calledOnce, 'It should call the factory only once');
+					assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
 				});
-				injector.set('testType', 'simpleValue', 'hello');
-
-				return injector.get('simpleValue')
-					.then(function(val){
-						assert(factorySpy.calledOnce, 'It should call the factory only once');
-						assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
-					});
-
-			});
-
-			it('should use factory specified in type', function(){
-				var injector = new Di({
-					types: {
-						'testType': {
-							singleton: true,
-							scope: '/',
-							factory: 'testFactory'
-						}
-					},
-					factories: {
-						testFactory: factoryMethod
-					}
-				});
-				injector.set('testType', 'simpleValue', 'hello');
-
-				return injector.get('simpleValue')
-					.then(function(val){
-						assert(factorySpy.calledOnce, 'It should call the factory only once');
-						assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
-					});
-
-			});
-
-			it('should throw an error when setting a factory that does not exist', function(){
-				var run = function(){
-					new Di({
-						types: {
-							'testType': {
-								singleton: true,
-								scope: '/',
-								factory: 'unknownFactory'
-							}
-						}
-					});
-				};
-				assert.throws(run, Error, "Factory unknownFactory is not defined");
-
-			});
-
-			it('should create a module with type(singleton:true, scope:/) only once', function(){
-				var injector = new Di({
-					types: {
-						'testType': {
-							singleton: true,
-							scope: '/',
-							factory: factoryMethod
-						}
-					}
-				});
-				injector.set('testType', 'random', function(){
-					return Promise.resolve(Math.random());
-				});
-
-				return Promise.all([
-					injector.get('random'),
-					injector.get('random')
-				])
-					.spread(function(timestamp1, timestamp2){
-						assert(factorySpy.calledOnce, 'It should call the factory only once');
-						assert.isNumber(timestamp1, 'timestamp should be a number');
-						assert.equal(timestamp1, timestamp2, 'it should always return the same value for timestamps');
-					});
-
-			});
-			it('should create a module with type(singleton:true, scope:/) only once even when called from different child injectors', function(){
-				assert(false,'implement this but without static (make custom type)');
-			});
 
 		});
+
+		it('should use factory specified in type', function(){
+			var injector = new Di({
+				types: {
+					'testType': {
+						singleton: true,
+						scope: '/',
+						factory: 'testFactory'
+					}
+				},
+				factories: {
+					testFactory: factoryMethod
+				}
+			});
+			injector.set('testType', 'simpleValue', 'hello');
+
+			return injector.get('simpleValue')
+				.then(function(val){
+					assert(factorySpy.calledOnce, 'It should call the factory only once');
+					assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
+				});
+
+		});
+
+		it('should throw an error when setting a factory that does not exist', function(){
+			var run = function(){
+				new Di({
+					types: {
+						'testType': {
+							singleton: true,
+							scope: '/',
+							factory: 'unknownFactory'
+						}
+					}
+				});
+			};
+			assert.throws(run, Error, "Factory unknownFactory is not defined");
+
+		});
+
+		it('should create a module with type(singleton:true, scope:/) only once', function(){
+			var injector = new Di({
+				types: {
+					'testType': {
+						singleton: true,
+						scope: '/',
+						factory: factoryMethod
+					}
+				}
+			});
+			injector.set('testType', 'random', function(){
+				return Promise.resolve(Math.random());
+			});
+
+			return Promise.all([
+				injector.get('random'),
+				injector.get('random')
+			])
+				.spread(function(random1, random2){
+					assert(factorySpy.calledOnce, 'It should call the factory only once');
+					assert.isNumber(random1, 'random should be a number');
+					assert.equal(random1, random2, 'it should always return the same value for randoms');
+				});
+
+		});
+		it('should create a module with type(singleton:true, scope:/) only once even when called from different child injectors', function(){
+			var injector = new Di({
+				types: {
+					'testType': {
+						singleton: true,
+						scope: '/',
+						factory: factoryMethod
+					}
+				}
+			});
+			// we need to make sure it can get a module from its parent
+			injector.set('testType', 'random', function(){
+				return Promise.resolve(Math.random());
+			});
+
+			var childInjector = injector.createChild();
+			var grandchildInjector = childInjector.createChild();
+
+			return Promise.all([
+				injector.get('random'),
+				childInjector.get('random'),
+				grandchildInjector.get('random')
+			])
+				.spread(function(random, random2, random3){
+					assert(factorySpy.calledOnce, 'It should call the factory only once');
+					assert.isNumber(random, 'random should be a number');
+					assert.equal(random, random2, 'random === random2');
+					assert.equal(random, random3, 'random === random2');
+				});
+		});
+
 
 	});
 
