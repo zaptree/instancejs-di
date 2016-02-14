@@ -1,10 +1,22 @@
 'use strict';
 
 var Di = require('../index');
+
 var assert = require('chai').assert;
 var Promise = require('bluebird');
+var sinon = require('sinon');
+var _ = require('lodash');
 
 describe('Di', function(){
+	var sandbox;
+
+	beforeEach(function(){
+		sandbox = sinon.sandbox.create();
+	});
+
+	afterEach(function(){
+		sandbox.restore();
+	});
 
 	it('should create an instance of the injector', function(){
 
@@ -235,25 +247,120 @@ describe('Di', function(){
 					assert.equal(val.newProperty,'new property', 'it should have property newProperty with value "new property"');
 				})
 		});
-		describe.skip('static',function(){
-			it('should create a static type only once', function(){
+		describe('types',function(){
+			var factorySpy,
+				factoryMethod;
+
+			beforeEach(function(){
+				factoryMethod = function(){
+					return factorySpy = sinon.spy(Di.prototype.defaultFactory);
+				};
+			});
+
+			it('should create a simple value using a specified type', function(){
 				var injector = new Di();
-				injector.set('static','random', function(){
-					return Math.random();
+				injector.set('create', 'simpleValue', 'hello');
+
+				return injector.get('simpleValue')
+					.then(function(val){
+						assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
+					});
+			});
+			it('should throw an error when using a type that does not exist', function(){
+				var injector = new Di();
+				var run = function(){
+					injector.set('unknownType', 'simpleValue', 'hello');
+				};
+				assert.throws(run, Error, "Type unknownType is not defined");
+
+
+			});
+
+			it('should use factory method specified in type', function(){
+				var injector = new Di({
+					types: {
+						'testType': {
+							singleton: true,
+							scope: '/',
+							factory: factoryMethod
+						}
+					}
+				});
+				injector.set('testType', 'simpleValue', 'hello');
+
+				return injector.get('simpleValue')
+					.then(function(val){
+						assert(factorySpy.calledOnce, 'It should call the factory only once');
+						assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
+					});
+
+			});
+
+			it('should use factory specified in type', function(){
+				var injector = new Di({
+					types: {
+						'testType': {
+							singleton: true,
+							scope: '/',
+							factory: 'testFactory'
+						}
+					},
+					factories: {
+						testFactory: factoryMethod
+					}
+				});
+				injector.set('testType', 'simpleValue', 'hello');
+
+				return injector.get('simpleValue')
+					.then(function(val){
+						assert(factorySpy.calledOnce, 'It should call the factory only once');
+						assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
+					});
+
+			});
+
+			it('should throw an error when setting a factory that does not exist', function(){
+				var run = function(){
+					new Di({
+						types: {
+							'testType': {
+								singleton: true,
+								scope: '/',
+								factory: 'unknownFactory'
+							}
+						}
+					});
+				};
+				assert.throws(run, Error, "Factory unknownFactory is not defined");
+
+			});
+
+			it('should create a module with type(singleton:true, scope:/) only once', function(){
+				var injector = new Di({
+					types: {
+						'testType': {
+							singleton: true,
+							scope: '/',
+							factory: factoryMethod
+						}
+					}
+				});
+				injector.set('testType', 'random', function(){
+					return Promise.resolve(Math.random());
 				});
 
-				// fixme: the problem here is that we do both in parallel and the first one is not done when the second is asked for
 				return Promise.all([
 					injector.get('random'),
 					injector.get('random')
 				])
 					.spread(function(timestamp1, timestamp2){
+						assert(factorySpy.calledOnce, 'It should call the factory only once');
+						assert.isNumber(timestamp1, 'timestamp should be a number');
 						assert.equal(timestamp1, timestamp2, 'it should always return the same value for timestamps');
-						assert(false, 'this test should not be for static but for type created to work like static and remove static from defaults');
 					});
 
 			});
-			it('should create static type only once even when called from different child injectors', function(){
+			it('should create a module with type(singleton:true, scope:/) only once even when called from different child injectors', function(){
 				assert(false,'implement this but without static (make custom type)');
 			});
 
