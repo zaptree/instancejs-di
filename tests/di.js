@@ -68,7 +68,7 @@ describe('Di', function(){
 			})
 	});
 
-	it.skip('test constructor with promise', function(){
+	it('test constructor with promise', function(){
 		assert(false, 'implement this into actually using the injector');
 		class MyClass {
 			constructor(){
