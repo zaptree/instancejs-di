@@ -161,6 +161,82 @@ describe('Di', function(){
 			})
 	});
 
+	it('should create a value with provided class constructor, resolve the dependencies using .$inject method', function(){
+		var injector = new Di();
+
+		class MyClass {
+			constructor(simpleValue, simpleValue2){
+				this.name = simpleValue + ' ' + simpleValue2;
+			}
+		}
+		MyClass.$inject = ['simpleValue', 'simpleValue2'];
+
+		injector.set('simpleValue', 'hello');
+		injector.set('simpleValue2', 'world');
+		injector.set('classWithDependencies', MyClass);
+
+		return injector.get('classWithDependencies')
+			.then(function(instance){
+				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
+			})
+	});
+
+
+
+	it('should create a value with provided function constructor and resolve the dependencies using .$inject method', function(){
+		var injector = new Di();
+
+		function MyFunction(simpleValue, simpleValue2){
+			this.name = simpleValue + ' ' + simpleValue2;
+		}
+		MyFunction.$inject = ['simpleValue', 'simpleValue2'];
+
+		injector.set('simpleValue', 'hello');
+		injector.set('simpleValue2', 'world');
+		injector.set('functionWithDependencies', MyFunction);
+
+		return injector.get('functionWithDependencies')
+			.then(function(instance){
+				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
+			})
+	});
+
+	it('should create a value with provided class constructor and resolve the dependencies using argument toString parsing', function(){
+		var injector = new Di();
+
+		class MyClass {
+			constructor(simpleValue, simpleValue2){
+				this.name = simpleValue + ' ' + simpleValue2;
+			}
+		}
+
+		injector.set('simpleValue', 'hello');
+		injector.set('simpleValue2', 'world');
+		injector.set('classWithDependencies', MyClass);
+
+		return injector.get('classWithDependencies')
+			.then(function(instance){
+				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
+			})
+	});
+
+	it('should create a value with provided function constructor and resolve the dependencies using argument toString parsing', function(){
+		var injector = new Di();
+
+		function MyFunction(simpleValue, simpleValue2){
+			this.name = simpleValue + ' ' + simpleValue2;
+		}
+
+		injector.set('simpleValue', 'hello');
+		injector.set('simpleValue2', 'world');
+		injector.set('functionWithDependencies', MyFunction);
+
+		return injector.get('functionWithDependencies')
+			.then(function(instance){
+				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
+			})
+	});
+
 	it('should create a value with provided array constructor, resolve the dependencies and get the value in async mode', function(){
 		var injector = new Di();
 		injector.set('simpleValue', 'hello');
@@ -260,7 +336,6 @@ describe('Di', function(){
 		beforeEach(function(){
 			factorySpy = sinon.spy(Di.prototype.defaultFactory);
 			factoryMethod = function(){
-				//return factorySpy = sinon.spy(Di.prototype.defaultFactory);
 				return factorySpy;
 			};
 		});
@@ -274,6 +349,7 @@ describe('Di', function(){
 					assert.equal(val,'hello', 'it should return the value of simpleValue when resolving the promise');
 				});
 		});
+
 		it('should throw an error when using a type that does not exist', function(){
 			var injector = new Di();
 			var run = function(){
@@ -368,6 +444,7 @@ describe('Di', function(){
 				});
 
 		});
+
 		it('should create a module with type(singleton:true, scope:/) only once even when called from different child injectors', function(){
 			var injector = new Di({
 				types: {
@@ -399,7 +476,115 @@ describe('Di', function(){
 				});
 		});
 
+		it('should create a module with type(singleton:true, scope:undefined) only once when in the same injector', function(){
+			var injector = new Di({
+				types: {
+					'testType': {
+						singleton: true,
+						factory: factoryMethod
+					}
+				}
+			});
+			injector.set('testType', 'random', function(){
+				return Promise.resolve(Math.random());
+			});
+
+			return Promise.all([
+				injector.get('random'),
+				injector.get('random')
+			])
+				.spread(function(random1, random2){
+					assert(factorySpy.calledOnce, 'It should call the factory only once');
+					assert.isNumber(random1, 'random should be a number');
+					assert.equal(random1, random2, 'it should always return the same value for randoms');
+				});
+
+		});
+
+		it('should create a module with type(singleton:true, scope:undefined) once for each child injectors', function(){
+			var injector = new Di({
+				types: {
+					'testType': {
+						singleton: true,
+						factory: factoryMethod
+					}
+				}
+			});
+			// we need to make sure it can get a module from its parent
+			injector.set('testType', 'random', function(){
+				return Promise.resolve(Math.random());
+			});
+
+			var childInjector = injector.createChild();
+			var grandchildInjector = childInjector.createChild();
+
+			return Promise.all([
+				injector.get('random'),
+				injector.get('random'),
+				childInjector.get('random'),
+				childInjector.get('random'),
+				grandchildInjector.get('random'),
+				grandchildInjector.get('random')
+			])
+				.spread(function(random1_1, random1_2, random2_1, random_2_2, random3_1, random3_2){
+					assert.equal(factorySpy.callCount, 3, 'It should call the factory 3 times');
+
+
+					assert.isNumber(random1_1, 'random should be a number');
+					assert.isNumber(random2_1, 'random should be a number');
+					assert.isNumber(random3_1, 'random should be a number');
+
+					assert.equal(random1_1, random1_2, 'random1_1 === random1_2');
+					assert.equal(random2_1, random_2_2, 'random2_1 === random_2_2');
+					assert.equal(random3_1, random3_2, 'random3_1 === random3_2');
+
+					assert.notEqual(random1_1, random2_1, 'random !== random2');
+					assert.notEqual(random1_1, random3_1, 'random !== random2');
+					assert.notEqual(random2_1, random3_1, 'random2 !== random2');
+				});
+		});
+
+		it('should create a module with type(singleton:false) every time it is required', function(){
+			var injector = new Di({
+				types: {
+					'testType': {
+						singleton: false,
+						factory: factoryMethod
+					}
+				}
+			});
+			injector.set('testType', 'random', function(){
+				return Promise.resolve(Math.random());
+			});
+
+			return Promise.all([
+				injector.get('random'),
+				injector.get('random'),
+				injector.get('random')
+			])
+				.spread(function(random1, random2, random3){
+					assert.equal(factorySpy.callCount, 3, 'It should call the factory 3 times');
+					assert.isNumber(random1, 'random1 should be a number');
+					assert.isNumber(random2, 'random2 should be a number');
+					assert.isNumber(random3, 'random3 should be a number');
+					assert.notEqual(random1, random2, 'random !== random2');
+					assert.notEqual(random1, random3, 'random !== random2');
+					assert.notEqual(random2, random3, 'random !== random2');
+				});
+
+		});
+
+		it('should not use the new operator when using one of the default static types', function(){
+			assert(false, 'I can probably just use a function that returns a string, if it is static then it will return the string instead of an empty object');
+
+		});
+
+		it('should implement the lockScope feature', function(){
+			assert(false, 'how does this work? what is the scope on a scopedSingleton when we dont actually specify? maybe I should allow specifying a scope on any type and then lockScope will throw error if this is not created in that scope. Yea that makes sense actually')
+		})
 
 	});
+
+
 
 });
