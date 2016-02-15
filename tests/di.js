@@ -69,7 +69,8 @@ describe('Di', function(){
 	});
 
 	it('test constructor with promise', function(){
-		assert(false, 'implement this into actually using the injector');
+		var injector = new Di();
+
 		class MyClass {
 			constructor(){
 				return Promise.resolve()
@@ -81,6 +82,12 @@ describe('Di', function(){
 					.return(this);
 			}
 		}
+		injector.set('classWithPromiseConstructor', MyClass);
+
+		return injector.get('classWithPromiseConstructor')
+			.then(function(instance){
+				assert.deepEqual(instance.name, 'hello world', 'it should have populated the field async');
+			});
 		return (new MyClass())
 			.then(function(instance){
 				assert(instance.name === 'hello world')
