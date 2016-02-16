@@ -328,6 +328,126 @@ describe('Di', function(){
 
 		});
 
+		it('should create a $scopeHierarchy object literal for easy access to previous scopes', function(){
+			var injector = new Di();
+			var childInjector = injector.createChild({
+				$scopeName: 'child'
+			});
+			var grandChildInjector = childInjector.createChild({
+				$scopeName: 'grandChild'
+			});
+			var greatGrandChildInjector = grandChildInjector.createChild({
+				$scopeName: 'greatGrandChild'
+			});
+
+			assert.deepEqual(Object.keys(injector.$scopeHierarchy), ['/'], 'injector should have correct $scopeHierarchy');
+			assert.deepEqual(Object.keys(childInjector.$scopeHierarchy), ['/child/','/'], 'childInjector should have correct $scopeHierarchy');
+			assert.deepEqual(Object.keys(grandChildInjector.$scopeHierarchy), ['/child/grandChild/', '/child/', '/'], 'grandChildInjector should have correct $scopeHierarchy');
+			assert.deepEqual(Object.keys(greatGrandChildInjector.$scopeHierarchy), ['/child/grandChild/greatGrandChild/', '/child/grandChild/', '/child/', '/'], 'greatGrandChildInjector should have correct $scopeHierarchy');
+
+		});
+
+		it('should set modules on the correct scope', function(){
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: true,
+						scope: '/request/'
+					},
+					session: {
+						singleton: true,
+						// important note that we don't set scope or setScope to '/'
+						scope: '/request/'
+					}
+				}
+			});
+			var childInjector1 = injector.createChild({
+				$scopeName: 'request'
+			});
+			var childInjector2 = injector.createChild({
+				$scopeName: 'request'
+			});
+
+			var controllerArray = ['session' ,function(session){
+				this.session = session;
+			}];
+
+			childInjector1.set('session', 'session', {data:'one'});
+			childInjector2.set('session', 'session', {data:'two'});
+
+			childInjector1.set('controller', 'myController', controllerArray);
+			childInjector2.set('controller', 'myController', controllerArray);
+
+			// these assertion are just testing that stuff was saved in the correct cache
+			assert.deepEqual(Object.keys(injector.cache), [], 'myController should be saved in the root injector');
+			assert.deepEqual(_.sortBy(Object.keys(childInjector1.cache)), _.sortBy(['session', 'myController']), 'session and myController should be saved in the injector that it was set on');
+			assert.deepEqual(_.sortBy(Object.keys(childInjector2.cache)), _.sortBy(['session', 'myController']), 'session and myController  should be saved in the injector that it was set on');
+
+			return Promise.all([
+				childInjector1.get('myController'),
+				childInjector2.get('myController')
+			])
+				.spread(function(controller1, controller2){
+					assert.equal(controller1.session.data, 'one', 'controller1 should have the correct session');
+					assert.equal(controller2.session.data, 'two', 'controller2 should have the correct session');
+				});
+
+
+			//assert(false, 'how does this work? what is the scope on a scopedSingleton when we dont actually specify? maybe I should allow specifying a scope on any type and then lockScope will throw error if this is not created in that scope. Yea that makes sense actually')
+		});
+
+		it('should allow to specify setScope to choose which scope to save module when using set to improve performance', function(){
+			// although we want to save the session in 2 different scope.cache the controller is always the same so
+			// we can use setScope: '/'. In most cases using setScope: '/' is preferable and the default
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: true,
+						setScope: '/',
+						scope: '/request/'
+					},
+					session: {
+						singleton: true
+					}
+				}
+			});
+			var childInjector1 = injector.createChild({
+				$scopeName: 'request'
+			});
+			var childInjector2 = injector.createChild({
+				$scopeName: 'request'
+			});
+
+
+			var controllerArray = ['session' ,function(session){
+				this.session = session;
+			}];
+
+			childInjector1.set('session', 'session', {data:'one'});
+			childInjector2.set('session', 'session', {data:'two'});
+
+			childInjector1.set('controller', 'myController', controllerArray);
+			childInjector2.set('controller', 'myController', controllerArray);
+
+			assert.deepEqual(Object.keys(injector.cache), ['myController'], 'myController should be saved in the root injector');
+			assert.deepEqual(Object.keys(childInjector1.cache), ['session'], 'session should be saved in the injector that it was set on');
+			assert.deepEqual(Object.keys(childInjector2.cache), ['session'], 'session should be saved in the injector that it was set on');
+
+			return Promise.all([
+				childInjector1.get('myController'),
+				childInjector2.get('myController')
+			])
+				.spread(function(controller1, controller2){
+					assert.equal(controller1.session.data, 'one', 'controller1 should have the correct session');
+					assert.equal(controller2.session.data, 'two', 'controller2 should have the correct session');
+				});
+		});
+
+		it('should allow replacing modules from up the hierarchy for current and lower scopes', function(){
+			// make injector, childInjector, grandChildInjector set xxx in injector and then also in child, test injector.get, child.get and grandchild.get for correct values
+			assert(false);
+		})
+
 	});
 	describe('types', function(){
 		var factorySpy,
@@ -338,6 +458,10 @@ describe('Di', function(){
 			factoryMethod = function(){
 				return factorySpy;
 			};
+		});
+
+		it('should create shortcut methods for each type', function(){
+			assert(false, 'NOT IMPLEMENTED');
 		});
 
 		it('should create a simple value using a specified type', function(){
@@ -575,13 +699,44 @@ describe('Di', function(){
 		});
 
 		it('should not use the new operator when using one of the default static types', function(){
-			assert(false, 'I can probably just use a function that returns a string, if it is static then it will return the string instead of an empty object');
+			var injector = new Di();
+			injector.set('staticSingleton', 'staticFunction', function(){
+				return 'hello';
+			});
+			injector.set('singleton', 'nonStaticFunction', function(){
+				return 'hello';
+			});
+
+			return Promise.all([
+				injector.get('staticFunction'),
+				injector.get('nonStaticFunction')
+			])
+				.spread(function(valueStatic, valueNonStatic){
+					assert.equal(valueStatic, 'hello', 'it should return the string value');
+					assert.isObject(valueNonStatic, 'it should return an object when not using static');
+				});
 
 		});
 
 		it('should implement the lockScope feature', function(){
-			assert(false, 'how does this work? what is the scope on a scopedSingleton when we dont actually specify? maybe I should allow specifying a scope on any type and then lockScope will throw error if this is not created in that scope. Yea that makes sense actually')
-		})
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false,
+						lockScope: true,
+						scope: '/request/'
+					}
+				}
+			});
+			var childInjector = injector.createChild({
+				$scopeName: 'request'
+			});
+
+			childInjector.set('session', {hello:'one'});
+
+
+			//assert(false, 'how does this work? what is the scope on a scopedSingleton when we dont actually specify? maybe I should allow specifying a scope on any type and then lockScope will throw error if this is not created in that scope. Yea that makes sense actually')
+		});
 
 	});
 
