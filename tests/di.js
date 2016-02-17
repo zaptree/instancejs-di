@@ -163,6 +163,55 @@ describe('Di', function () {
 			})
 	});
 
+	it('should create a value with provided object constructor, resolve the dependencies using .$inject method', function(){
+		var injector = new Di();
+		var myObject = {
+			$inject: ['myValue'],
+			initialize: function(myValue){
+				this.value = myValue;
+			}
+		};
+		injector.set('myValue', 'hello');
+		injector.set('myObject', myObject);
+
+		return injector.get('myObject')
+			.then(function(myObject){
+				assert(myObject.value, 'hello', 'it should have injected myValue');
+			});
+	});
+
+	it('should create a value with provided object constructor, resolve the dependencies using argument toString parsing', function(){
+		var injector = new Di();
+		var myObject = {
+			initialize: function(myValue){
+				this.value = myValue;
+			}
+		};
+		injector.set('myValue', 'hello');
+		injector.set('myObject', myObject);
+
+		return injector.get('myObject')
+			.then(function(myObject){
+				assert(myObject.value, 'hello', 'it should have injected myValue');
+			});
+	});
+
+	it('should create a value with provided array object constructor, resolve the dependencies', function(){
+		var injector = new Di();
+		var myObject = {
+			initialize: function(myValue){
+				this.value = myValue;
+			}
+		};
+		injector.set('myValue', 'hello');
+		injector.set('myObject', ['myValue', myObject]);
+
+		return injector.get('myObject')
+			.then(function(myObject){
+				assert(myObject.value, 'hello', 'it should have injected myValue');
+			});
+	});
+
 	it('should create a value with provided class constructor, resolve the dependencies using .$inject method', function () {
 		var injector = new Di();
 
@@ -300,8 +349,6 @@ describe('Di', function () {
 				assert.deepEqual(val.value, 'hello async world', 'it should return the value of withAsyncDependencies when resolving the promise');
 			})
 	});
-
-
 
 	describe('createChild', function () {
 
@@ -509,8 +556,6 @@ describe('Di', function () {
 					assert.equal(myValueSetScope3, 'two', 'myValueSetScope3 should equal two');
 				});
 
-
-			assert(false);
 		})
 
 	});
@@ -519,10 +564,47 @@ describe('Di', function () {
 			factoryMethod;
 
 		beforeEach(function () {
-			factorySpy = sinon.spy(Di.prototype.defaultFactory);
+			factorySpy = sinon.spy(Di.prototype._defaultFactory);
 			factoryMethod = function () {
 				return factorySpy;
 			};
+		});
+
+		it('should get type from $type property using class', function(){
+			var injector = new Di({
+				types: {
+					testType: {
+						singleton: true,
+						factory: factoryMethod
+					}
+				}
+			});
+			class testClass{
+				constructor(){
+					this.value = 'hello'
+				}
+			}
+			testClass.$type = 'testType';
+			injector.set('testClass', testClass);
+			var testObject = {
+				$type: 'testType',
+				initialize: function(){
+					this.value = 'world';
+				}
+			};
+			injector.set('testObject', testObject);
+
+			return Promise.all([
+				injector.get('testClass'),
+				injector.get('testObject')
+			])
+				.spread(function(testClass, testObject){
+					assert.equal(factorySpy.callCount, 2, 'it should of called the factory method 2 times');
+					assert.equal(testClass.value, 'hello');
+					assert.equal(testObject.value, 'world');
+				});
+
+
 		});
 
 		it('should create shortcut methods for each type', function () {
