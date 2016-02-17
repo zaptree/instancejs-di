@@ -491,16 +491,20 @@ describe('Di', function () {
 				$scopeName: 'request'
 			});
 
-
-			var controllerArray = ['session', function (session) {
-				this.session = session;
+			// using the object literal here I am also testing that it creates a new instance
+			var controllerArray = ['session', {
+				// make sure to use this way of setting the type because it tests that the setScope works with this way of setting type
+				$type: 'controller',
+				initialize: function (session) {
+					this.session = session;
+				}
 			}];
 
 			childInjector1.set('session', 'session', {data: 'one'});
 			childInjector2.set('session', 'session', {data: 'two'});
 
-			childInjector1.set('controller', 'myController', controllerArray);
-			childInjector2.set('controller', 'myController', controllerArray);
+			childInjector1.set('myController', controllerArray);
+			childInjector2.set('myController', controllerArray);
 
 			assert.deepEqual(Object.keys(injector.cache), ['myController'], 'myController should be saved in the root injector');
 			assert.deepEqual(Object.keys(childInjector1.cache), ['session'], 'session should be saved in the injector that it was set on');
@@ -586,6 +590,7 @@ describe('Di', function () {
 			}
 			testClass.$type = 'testType';
 			injector.set('testClass', testClass);
+			injector.set('testClassArray', [testClass]);
 			var testObject = {
 				$type: 'testType',
 				initialize: function(){
@@ -593,15 +598,20 @@ describe('Di', function () {
 				}
 			};
 			injector.set('testObject', testObject);
+			injector.set('testObjectArray', [testObject]);
 
 			return Promise.all([
 				injector.get('testClass'),
-				injector.get('testObject')
+				injector.get('testObject'),
+				injector.get('testClassArray'),
+				injector.get('testObjectArray')
 			])
-				.spread(function(testClass, testObject){
-					assert.equal(factorySpy.callCount, 2, 'it should of called the factory method 2 times');
+				.spread(function(testClass, testObject, testClassArray, testObjectArray){
+					assert.equal(factorySpy.callCount, 4, 'it should of called the factory method 2 times');
 					assert.equal(testClass.value, 'hello');
 					assert.equal(testObject.value, 'world');
+					assert.equal(testClassArray.value, 'hello');
+					assert.equal(testObjectArray.value, 'world');
 				});
 
 
@@ -932,6 +942,87 @@ describe('Di', function () {
 				});
 
 		});
+
+		it('should use the type matcher to determine type when it is not specified', function(){
+			var factory = function(){
+				return function(module){
+					return module.type;
+				};
+			};
+			var injector = new Di({
+				types: {
+					model: {
+						singleton: true,
+						factory: factory
+					},
+					controller: {
+						singleton: true,
+						factory: factory
+					},
+					trickModel: {
+						singleton: true,
+						factory: factory
+					}
+				},
+				typeMatcher: {
+					'model': /Model$/,
+					'controller': /Controller$/,
+					// adding a match that will also match models to make sure whatever is higher in the list matches first
+					'trickModel': /Model/
+				}
+			});
+
+			injector.set('FakeModelTrick', 'fakeModelTrick');
+			injector.set('ProductsModel', 'productsModel');
+			injector.set('ProductsController', 'productsConstroller');
+			injector.set('UsersModel', class UsersModel{ constructor(){} });
+			injector.set('UsersController', [function(){ }]);
+			injector.set('CheckoutController', {initialize: function(){}});
+
+			return Promise.all([
+				injector.get('FakeModelTrick'),
+				injector.get('ProductsModel'),
+				injector.get('ProductsController'),
+				injector.get('UsersModel'),
+				injector.get('UsersController'),
+				injector.get('CheckoutController')
+			])
+				.spread(function(fakeModelTrick, productsModel, productsController, usersModel, usersController, checkoutController){
+					assert.equal(fakeModelTrick, 'trickModel');
+					assert.equal(productsModel, 'model');
+					assert.equal(productsController, 'controller');
+					assert.equal(usersModel, 'model');
+					assert.equal(usersController, 'controller');
+					assert.equal(checkoutController, 'controller');
+				});
+
+
+		});
+
+		it('should create a "clone" of the object when using the default factory and object literal "classes"', function(){
+			var injector = new Di({
+				types: {
+					testType: {
+						singleton: false
+					}
+				}
+			});
+			var controller = {
+				initialize: function(){
+
+				}
+			};
+			injector.testType('myController', controller );
+			return Promise.all([
+				injector.get('myController'),
+				injector.get('myController')
+			])
+				.spread(function(controller1, controller2){
+					controller1.name = 'hello';
+					assert(controller2.name !== 'hello');
+				});
+
+		})
 
 	});
 
