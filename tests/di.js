@@ -1,5 +1,7 @@
 'use strict';
 
+var Path = require('path');
+
 var Di = require('../index');
 
 var assert = require('chai').assert;
@@ -153,7 +155,7 @@ describe('Di', function () {
 				assert.deepEqual(val, 'hello async', 'it should return the value of asyncValue when resolving the promise');
 
 				// this test is important to make sure it does not save the promise because then we would have a memory leak (depending on the promise lib)
-				assert.deepEqual(injector.instanceCache.asyncValue, 'hello async', 'it should have saved the resolved value in the instanceCache');
+				assert.deepEqual(injector.$instanceCache.asyncValue, 'hello async', 'it should have saved the resolved value in the $instanceCache');
 
 				// basically testing the when you get a cached value it will return a promise so you can chain it and not just the value
 				return injector.get('asyncValue')
@@ -352,7 +354,7 @@ describe('Di', function () {
 
 	describe('createChild', function () {
 
-		it('should inherit options from parent', function () {
+		it('should inherit $options from parent', function () {
 			var injector = new Di({
 				types: {
 					testType: {
@@ -369,11 +371,11 @@ describe('Di', function () {
 				}
 			});
 
-			assert.isObject(injector.options.types.testType, 'injector should have testType');
-			assert.isUndefined(injector.options.types.childTestType, 'injector should not have childTestType');
+			assert.isObject(injector.$options.types.testType, 'injector should have testType');
+			assert.isUndefined(injector.$options.types.childTestType, 'injector should not have childTestType');
 
-			assert.isObject(childInjector.options.types.testType, 'Child injector should have testType inherited');
-			assert.isObject(childInjector.options.types.childTestType, 'Child injector should have childTestType');
+			assert.isObject(childInjector.$options.types.testType, 'Child injector should have testType inherited');
+			assert.isObject(childInjector.$options.types.childTestType, 'Child injector should have childTestType');
 
 		});
 		it('should create child injector and be able to get/set modules', function () {
@@ -451,10 +453,10 @@ describe('Di', function () {
 			childInjector1.set('controller', 'myController', controllerArray);
 			childInjector2.set('controller', 'myController', controllerArray);
 
-			// these assertion are just testing that stuff was saved in the correct cache
-			assert.deepEqual(Object.keys(injector.cache), [], 'myController should be saved in the root injector');
-			assert.deepEqual(_.sortBy(Object.keys(childInjector1.cache)), _.sortBy(['session', 'myController']), 'session and myController should be saved in the injector that it was set on');
-			assert.deepEqual(_.sortBy(Object.keys(childInjector2.cache)), _.sortBy(['session', 'myController']), 'session and myController  should be saved in the injector that it was set on');
+			// these assertion are just testing that stuff was saved in the correct $cache
+			assert.deepEqual(Object.keys(injector.$cache), [], 'myController should be saved in the root injector');
+			assert.deepEqual(_.sortBy(Object.keys(childInjector1.$cache)), _.sortBy(['session', 'myController']), 'session and myController should be saved in the injector that it was set on');
+			assert.deepEqual(_.sortBy(Object.keys(childInjector2.$cache)), _.sortBy(['session', 'myController']), 'session and myController  should be saved in the injector that it was set on');
 
 			return Promise.all([
 				childInjector1.get('myController'),
@@ -470,7 +472,7 @@ describe('Di', function () {
 		});
 
 		it('should allow to specify setScope to choose which scope to save module when using set to improve performance', function () {
-			// although we want to save the session in 2 different scope.cache the controller is always the same so
+			// although we want to save the session in 2 different scope.$cache the controller is always the same so
 			// we can use setScope: '/'. In most cases using setScope: '/' is preferable and the default
 			var injector = new Di({
 				types: {
@@ -506,9 +508,9 @@ describe('Di', function () {
 			childInjector1.set('myController', controllerArray);
 			childInjector2.set('myController', controllerArray);
 
-			assert.deepEqual(Object.keys(injector.cache), ['myController'], 'myController should be saved in the root injector');
-			assert.deepEqual(Object.keys(childInjector1.cache), ['session'], 'session should be saved in the injector that it was set on');
-			assert.deepEqual(Object.keys(childInjector2.cache), ['session'], 'session should be saved in the injector that it was set on');
+			assert.deepEqual(Object.keys(injector.$cache), ['myController'], 'myController should be saved in the root injector');
+			assert.deepEqual(Object.keys(childInjector1.$cache), ['session'], 'session should be saved in the injector that it was set on');
+			assert.deepEqual(Object.keys(childInjector2.$cache), ['session'], 'session should be saved in the injector that it was set on');
 
 			return Promise.all([
 				childInjector1.get('myController'),
@@ -554,7 +556,7 @@ describe('Di', function () {
 					assert.equal(myValue2, 'two', 'myValue2 should equal two');
 					assert.equal(myValue3, 'two', 'myValue3 should equal two');
 
-					// since we specified the setScope to be root only one version exists in the cache so the second one overwrote the first one.
+					// since we specified the setScope to be root only one version exists in the $cache so the second one overwrote the first one.
 					assert.equal(myValueSetScope1, 'two', 'myValueSetScope1 should equal two');
 					assert.equal(myValueSetScope2, 'two', 'myValueSetScope2 should equal two');
 					assert.equal(myValueSetScope3, 'two', 'myValueSetScope3 should equal two');
@@ -1024,6 +1026,34 @@ describe('Di', function () {
 
 		})
 
+	});
+
+	describe('Loader', function(){
+
+		it.only('should autoload an external class', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			injector.set('myValue', 'hello');
+
+			return injector.get('ClassProductsModel')
+				.then(function(classProductModel){
+					assert.equal(classProductModel.name, 'hello', 'it should load the ClassProductsModel and resolve the dependencies');
+				});
+
+		});
+
+		it('should not load file paths twice for paths previously set and should work even with different aliases when creating child injectors', function(){
+			// i need to add a set timeout here to make sure that the loading of the files is already done before I call get
+
+
+		});
+
+		it('should not reload paths when childInjector is created', function(){
+			// the loader should have the ability to not reload files from paths already checked (I can probably test this directly on the loader)
+		});
 	});
 
 
