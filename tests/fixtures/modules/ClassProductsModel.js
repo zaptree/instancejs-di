@@ -5,3 +5,5 @@ class ClassProductsModel{
 		this.name = myValue;
 	}
 }
+
+module.exports = ClassProductsModel;
