@@ -2,17 +2,19 @@
 
 var Path = require('path');
 
-var Di = require('../index');
+var Di = require('../index'),
+	loader = require('../lib/loader');
 
-var assert = require('chai').assert;
-var Promise = require('bluebird');
-var sinon = require('sinon');
-var _ = require('lodash');
+var assert = require('chai').assert,
+	Promise = require('bluebird'),
+	sinon = require('sinon'),
+	_ = require('lodash');
 
 describe('Di', function () {
 	var sandbox;
 
 	beforeEach(function () {
+		loader.prototype.reset();
 		sandbox = sinon.sandbox.create();
 	});
 
@@ -1030,7 +1032,7 @@ describe('Di', function () {
 
 	describe('Loader', function(){
 
-		it.only('should autoload an external class', function(){
+		it('should autoload an external class with a partial name', function(){
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1045,6 +1047,229 @@ describe('Di', function () {
 
 		});
 
+		it('should not autoload an external class with a partial name when options.exactMatch is true', function(){
+			var injector = new Di({
+				exactMatch: true,
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			injector.set('myValue', 'hello');
+			var error;
+
+			return injector.get('ClassProductsModel')
+				.catch(function(err){
+					error = err;
+				})
+				.finally(function(){
+					assert.equal(error.message, 'Module ClassProductsModel Not found');
+				});
+
+		});
+
+		it('should autoload an external class with a full path name when options.exactMatch is true', function(){
+			var injector = new Di({
+				exactMatch: true,
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			injector.set('myValue', 'hello');
+
+			return injector.get('modules/ClassProductsModel')
+				.then(function(classProductModel){
+					assert.equal(classProductModel.name, 'hello', 'it should load the ClassProductsModel and resolve the dependencies');
+				});
+
+		});
+
+
+		it('should throw an error when trying to load a non-existant module', function(){
+			// i need to add a set timeout here to make sure that the loading of the files is already done before I call get
+
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			var error;
+			return injector.get('UnknownModule')
+				.catch(function(err){
+					error = err;
+				})
+				.finally(function(){
+					assert.equal(error.message, 'Module UnknownModule Not found');
+				});
+
+		});
+
+		it('should only glob files from disk only once for each path specified in paths', function(){
+			var options = {
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			};
+			var injector = new Di(options);
+			var injector2 = new Di(options);
+
+			injector.set('myValue', 'hello');
+			injector2.set('myValue', 'hello');
+
+			var glob = require('glob');
+			var GlobAsyncStub = sandbox.stub(glob, 'GlobAsync', function(){
+				return Promise.resolve([
+					Path.join(__dirname, '/fixtures/modules/ClassProductsModel.js')
+				]).delay(200);
+			});
+
+			return injector.get('ClassProductsModel')
+				.then(function(classProductModel){
+					assert.equal(classProductModel.name, 'hello');
+					return injector2.get('ClassProductsModel');
+				})
+				.then(function(classProductModel){
+					assert.equal(classProductModel.name, 'hello');
+					assert(GlobAsyncStub.calledOnce, 'It should only try to glob the paths once');
+				});
+		});
+
+		it('should only glob files from disk only once for each path specified in paths even when it is running in parallel', function(){
+			var options = {
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			};
+			var injector = new Di(options);
+			var injector2 = new Di(options);
+
+			injector.set('myValue', 'hello');
+			injector2.set('myValue', 'hello');
+
+			var glob = require('glob');
+			var GlobAsyncStub = sandbox.stub(glob, 'GlobAsync', function(){
+				return Promise.resolve([
+					Path.join(__dirname, '/fixtures/modules/ClassProductsModel.js')
+				]).delay(200);
+			});
+
+			return Promise.all([
+				injector.get('ClassProductsModel'),
+				injector2.get('ClassProductsModel')
+			])
+				.spread(function(classProductModel, classProductModel2){
+					assert.equal(classProductModel.name, 'hello');
+					assert.equal(classProductModel2.name, 'hello');
+					assert(GlobAsyncStub.calledOnce, 'It should only try to read the file once');
+				});
+		});
+
+		it('should only read a file once for the same module on the same injector', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+
+			var fs = require('fs');
+			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function(){
+				return Promise.resolve('module.exports = "Stub";').delay(200);
+			});
+
+			return injector.get('ClassProductsModel')
+				.then(function(classProductModel){
+					assert.equal(classProductModel, 'Stub');
+					return injector.get('ClassProductsModel');
+				})
+				.then(function(classProductModel){
+					assert.equal(classProductModel, 'Stub');
+					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
+				});
+		});
+
+		it('should only read a file once for the same module on the same injector even when it is running in parallel', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+
+			// fixme
+			var fs = require('fs');
+			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function(){
+				return Promise.resolve('module.exports = "Stub";').delay(200);
+			});
+
+			return Promise.all([
+				injector.get('ClassProductsModel'),
+				injector.get('ClassProductsModel'),
+				injector.get('ClassProductsModel')
+			])
+				.spread(function(classProductModel, classProductModel2, classProductModel3){
+					assert.equal(classProductModel, 'Stub');
+					assert.equal(classProductModel2, 'Stub');
+					assert.equal(classProductModel3, 'Stub');
+					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
+				});
+		});
+
+		it('should only read a file from disk only once for the same module different injectors', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+
+			var injector2 = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+
+			var fs = require('fs');
+			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function(){
+				return Promise.resolve('module.exports = "Stub";').delay(200);
+			});
+
+			return injector.get('ClassProductsModel')
+				.then(function(classProductModel){
+					assert.equal(classProductModel, 'Stub');
+					return injector2.get('ClassProductsModel');
+				})
+				.then(function(classProductModel){
+					assert.equal(classProductModel, 'Stub');
+					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
+				});
+		});
+
+		it.only('should only read a file from disk only once for the same module on different injectos even when it is running in parallel', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+
+			var injector2 = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+
+			var fs = require('fs');
+			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function(){
+				return Promise.resolve('module.exports = "Stub";').delay(200);
+			});
+
+			return Promise.all([
+				injector.get('ClassProductsModel'),
+				injector2.get('ClassProductsModel')
+			])
+				.spread(function(classProductModel, classProductModel2){
+					assert.equal(classProductModel, 'Stub');
+					assert.equal(classProductModel2, 'Stub');
+					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
+				});
+		});
+
 		it('should not load file paths twice for paths previously set and should work even with different aliases when creating child injectors', function(){
 			// i need to add a set timeout here to make sure that the loading of the files is already done before I call get
 
@@ -1054,6 +1279,8 @@ describe('Di', function () {
 		it('should not reload paths when childInjector is created', function(){
 			// the loader should have the ability to not reload files from paths already checked (I can probably test this directly on the loader)
 		});
+
+		it('should try loading from node_modules if no module is found (make sure to add node_module paths array to check in)')
 	});
 
 
