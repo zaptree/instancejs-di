@@ -1241,7 +1241,7 @@ describe('Di', function () {
 				});
 		});
 
-		it.only('should only read a file from disk only once for the same module on different injectos even when it is running in parallel', function(){
+		it('should only read a file from disk only once for the same module on different injectors even when it is running in parallel', function(){
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1270,6 +1270,32 @@ describe('Di', function () {
 				});
 		});
 
+		it('should not match file names partially just shortenned paths when exactMatch is not true', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			var error;
+			injector.set('myValue', 'hello');
+
+			return injector.get('ProductsModel')
+				.catch(function(err){
+					error = err;
+				})
+				.finally(function(){
+					assert.equal(error.message, 'Module ProductsModel Not found');
+				});
+		});
+
+		it('should try loading from node_modules if no module is found (make sure to add node_module paths array to check in)', function(){
+
+		});
+
+		it('should throw an error when loading the same module with a different key', function(){
+			// this is actually not worth the effort. Just add to the docs not to do this
+		});
+
 		it('should not load file paths twice for paths previously set and should work even with different aliases when creating child injectors', function(){
 			// i need to add a set timeout here to make sure that the loading of the files is already done before I call get
 
@@ -1279,8 +1305,6 @@ describe('Di', function () {
 		it('should not reload paths when childInjector is created', function(){
 			// the loader should have the ability to not reload files from paths already checked (I can probably test this directly on the loader)
 		});
-
-		it('should try loading from node_modules if no module is found (make sure to add node_module paths array to check in)')
 	});
 
 
