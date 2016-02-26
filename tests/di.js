@@ -167,11 +167,11 @@ describe('Di', function () {
 			})
 	});
 
-	it('should create a value with provided object constructor, resolve the dependencies using .$inject method', function(){
+	it('should create a value with provided object constructor, resolve the dependencies using .$inject method', function () {
 		var injector = new Di();
 		var myObject = {
 			$inject: ['myValue'],
-			initialize: function(myValue){
+			initialize: function (myValue) {
 				this.value = myValue;
 			}
 		};
@@ -179,15 +179,15 @@ describe('Di', function () {
 		injector.set('myObject', myObject);
 
 		return injector.get('myObject')
-			.then(function(myObject){
+			.then(function (myObject) {
 				assert(myObject.value, 'hello', 'it should have injected myValue');
 			});
 	});
 
-	it('should create a value with provided object constructor, resolve the dependencies using argument toString parsing', function(){
+	it('should create a value with provided object constructor, resolve the dependencies using argument toString parsing', function () {
 		var injector = new Di();
 		var myObject = {
-			initialize: function(myValue){
+			initialize: function (myValue) {
 				this.value = myValue;
 			}
 		};
@@ -195,15 +195,15 @@ describe('Di', function () {
 		injector.set('myObject', myObject);
 
 		return injector.get('myObject')
-			.then(function(myObject){
+			.then(function (myObject) {
 				assert(myObject.value, 'hello', 'it should have injected myValue');
 			});
 	});
 
-	it('should create a value with provided array object constructor, resolve the dependencies', function(){
+	it('should create a value with provided array object constructor, resolve the dependencies', function () {
 		var injector = new Di();
 		var myObject = {
-			initialize: function(myValue){
+			initialize: function (myValue) {
 				this.value = myValue;
 			}
 		};
@@ -211,7 +211,7 @@ describe('Di', function () {
 		injector.set('myObject', ['myValue', myObject]);
 
 		return injector.get('myObject')
-			.then(function(myObject){
+			.then(function (myObject) {
 				assert(myObject.value, 'hello', 'it should have injected myValue');
 			});
 	});
@@ -292,12 +292,12 @@ describe('Di', function () {
 			})
 	});
 
-	it('should allow to disable pathSplitting when injecting using argument toString parsing', function(){
-		var test = function(options){
+	it('should allow to disable pathSplitting when injecting using argument toString parsing', function () {
+		var test = function (options) {
 			var injector = new Di(options);
 			injector.set('controllers$users', 'controller2');
 			injector.set('controllers/users', 'controller1');
-			injector.set('application', function(controllers$users){
+			injector.set('application', function (controllers$users) {
 				this.controller = controllers$users;
 			});
 
@@ -308,7 +308,7 @@ describe('Di', function () {
 			test(),
 			test({splitPathRegex: null})
 		])
-			.spread(function(withSplit, withoutSplit){
+			.spread(function (withSplit, withoutSplit) {
 				assert.equal(withSplit.controller, 'controller1', 'it should replace $ with / when using with split');
 				assert.equal(withoutSplit.controller, 'controller2', 'it should get the module that matches the name exactly');
 			});
@@ -578,7 +578,7 @@ describe('Di', function () {
 			};
 		});
 
-		it('should get type from $type property using class', function(){
+		it('should get type from $type property using class', function () {
 			var injector = new Di({
 				types: {
 					testType: {
@@ -587,8 +587,8 @@ describe('Di', function () {
 					}
 				}
 			});
-			class testClass{
-				constructor(){
+			class testClass {
+				constructor() {
 					this.value = 'hello'
 				}
 			}
@@ -597,7 +597,7 @@ describe('Di', function () {
 			injector.set('testClassArray', [testClass]);
 			var testObject = {
 				$type: 'testType',
-				initialize: function(){
+				initialize: function () {
 					this.value = 'world';
 				}
 			};
@@ -610,7 +610,7 @@ describe('Di', function () {
 				injector.get('testClassArray'),
 				injector.get('testObjectArray')
 			])
-				.spread(function(testClass, testObject, testClassArray, testObjectArray){
+				.spread(function (testClass, testObject, testClassArray, testObjectArray) {
 					assert.equal(factorySpy.callCount, 4, 'it should of called the factory method 2 times');
 					assert.equal(testClass.value, 'hello');
 					assert.equal(testObject.value, 'world');
@@ -625,7 +625,7 @@ describe('Di', function () {
 			var injector = new Di({
 				types: {
 					testType: {
-						singleton:true,
+						singleton: true,
 						factory: factoryMethod
 					}
 				}
@@ -633,7 +633,7 @@ describe('Di', function () {
 			var childInjector = injector.createChild({
 				types: {
 					childType: {
-						singleton:true
+						singleton: true
 					}
 				}
 			});
@@ -648,7 +648,7 @@ describe('Di', function () {
 				childInjector.get('myChildValue'),
 				childInjector.get('myChildOnlyValue')
 			])
-				.spread(function(myValue, myChildValue, myChildOnlyValue){
+				.spread(function (myValue, myChildValue, myChildOnlyValue) {
 					assert.equal(factorySpy.callCount, 2);
 					assert.equal(myValue, 'one');
 					assert.equal(myChildValue, 'two');
@@ -656,7 +656,7 @@ describe('Di', function () {
 				});
 		});
 
-		it('should throw an error when trying to save a type out of scope set by setScope', function(){
+		it('should throw an error when trying to save a type out of scope set by setScope', function () {
 			var di = new Di({
 				types: {
 					controller: {
@@ -670,9 +670,11 @@ describe('Di', function () {
 				$scopeName: 'request'
 			});
 
-			requestScope.controller('MyController1', function(){});
-			var run = function(){
-				di.controller('MyController2', function(){});
+			requestScope.controller('MyController1', function () {
+			});
+			var run = function () {
+				di.controller('MyController2', function () {
+				});
 			};
 			assert.throws(run, 'Trying to save module out of scope');
 
@@ -680,11 +682,11 @@ describe('Di', function () {
 		});
 
 		it('should throw na error when creating a type with a reserved method name', function () {
-			var run = function(){
+			var run = function () {
 				new Di({
 					types: {
 						set: {
-							singleton:true
+							singleton: true
 						}
 					}
 				});
@@ -947,9 +949,9 @@ describe('Di', function () {
 
 		});
 
-		it('should use the type matcher to determine type when it is not specified', function(){
-			var factory = function(){
-				return function(module){
+		it('should use the type matcher to determine type when it is not specified', function () {
+			var factory = function () {
+				return function (module) {
 					return module.type;
 				};
 			};
@@ -979,9 +981,16 @@ describe('Di', function () {
 			injector.set('FakeModelTrick', 'fakeModelTrick');
 			injector.set('ProductsModel', 'productsModel');
 			injector.set('ProductsController', 'productsConstroller');
-			injector.set('UsersModel', class UsersModel{ constructor(){} });
-			injector.set('UsersController', [function(){ }]);
-			injector.set('CheckoutController', {initialize: function(){}});
+			injector.set('UsersModel', class UsersModel {
+				constructor() {
+				}
+			});
+			injector.set('UsersController', [function () {
+			}]);
+			injector.set('CheckoutController', {
+				initialize: function () {
+				}
+			});
 
 			return Promise.all([
 				injector.get('FakeModelTrick'),
@@ -991,7 +1000,7 @@ describe('Di', function () {
 				injector.get('UsersController'),
 				injector.get('CheckoutController')
 			])
-				.spread(function(fakeModelTrick, productsModel, productsController, usersModel, usersController, checkoutController){
+				.spread(function (fakeModelTrick, productsModel, productsController, usersModel, usersController, checkoutController) {
 					assert.equal(fakeModelTrick, 'trickModel');
 					assert.equal(productsModel, 'model');
 					assert.equal(productsController, 'controller');
@@ -1003,7 +1012,7 @@ describe('Di', function () {
 
 		});
 
-		it('should create a "clone" of the object when using the default factory and object literal "classes"', function(){
+		it('should create a "clone" of the object when using the default factory and object literal "classes"', function () {
 			var injector = new Di({
 				types: {
 					testType: {
@@ -1012,16 +1021,16 @@ describe('Di', function () {
 				}
 			});
 			var controller = {
-				initialize: function(){
+				initialize: function () {
 
 				}
 			};
-			injector.testType('myController', controller );
+			injector.testType('myController', controller);
 			return Promise.all([
 				injector.get('myController'),
 				injector.get('myController')
 			])
-				.spread(function(controller1, controller2){
+				.spread(function (controller1, controller2) {
 					controller1.name = 'hello';
 					assert(controller2.name !== 'hello');
 				});
@@ -1030,9 +1039,9 @@ describe('Di', function () {
 
 	});
 
-	describe('Loader', function(){
+	describe('Loader', function () {
 
-		it('should autoload an external class with a partial name', function(){
+		it('should autoload an external class with a partial name', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1041,13 +1050,13 @@ describe('Di', function () {
 			injector.set('myValue', 'hello');
 
 			return injector.get('ClassProductsModel')
-				.then(function(classProductModel){
+				.then(function (classProductModel) {
 					assert.equal(classProductModel.name, 'hello', 'it should load the ClassProductsModel and resolve the dependencies');
 				});
 
 		});
 
-		it('should not autoload an external class with a partial name when options.exactMatch is true', function(){
+		it('should not autoload an external class with a partial name when options.exactMatch is true', function () {
 			var injector = new Di({
 				exactMatch: true,
 				paths: {
@@ -1058,16 +1067,16 @@ describe('Di', function () {
 			var error;
 
 			return injector.get('ClassProductsModel')
-				.catch(function(err){
+				.catch(function (err) {
 					error = err;
 				})
-				.finally(function(){
+				.finally(function () {
 					assert.equal(error.message, 'Module ClassProductsModel Not found');
 				});
 
 		});
 
-		it('should autoload an external class with a full path name when options.exactMatch is true', function(){
+		it('should autoload an external class with a full path name when options.exactMatch is true', function () {
 			var injector = new Di({
 				exactMatch: true,
 				paths: {
@@ -1077,14 +1086,14 @@ describe('Di', function () {
 			injector.set('myValue', 'hello');
 
 			return injector.get('modules/ClassProductsModel')
-				.then(function(classProductModel){
+				.then(function (classProductModel) {
 					assert.equal(classProductModel.name, 'hello', 'it should load the ClassProductsModel and resolve the dependencies');
 				});
 
 		});
 
 
-		it('should throw an error when trying to load a non-existant module', function(){
+		it('should throw an error when trying to load a non-existant module', function () {
 			// i need to add a set timeout here to make sure that the loading of the files is already done before I call get
 
 			var injector = new Di({
@@ -1094,16 +1103,16 @@ describe('Di', function () {
 			});
 			var error;
 			return injector.get('UnknownModule')
-				.catch(function(err){
+				.catch(function (err) {
 					error = err;
 				})
-				.finally(function(){
+				.finally(function () {
 					assert.equal(error.message, 'Module UnknownModule Not found');
 				});
 
 		});
 
-		it('should only glob files from disk only once for each path specified in paths', function(){
+		it('should only glob files from disk only once for each path specified in paths', function () {
 			var options = {
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1116,24 +1125,24 @@ describe('Di', function () {
 			injector2.set('myValue', 'hello');
 
 			var glob = require('glob');
-			var GlobAsyncStub = sandbox.stub(glob, 'GlobAsync', function(){
+			var GlobAsyncStub = sandbox.stub(glob, 'GlobAsync', function () {
 				return Promise.resolve([
 					Path.join(__dirname, '/fixtures/modules/ClassProductsModel.js')
 				]).delay(200);
 			});
 
 			return injector.get('ClassProductsModel')
-				.then(function(classProductModel){
+				.then(function (classProductModel) {
 					assert.equal(classProductModel.name, 'hello');
 					return injector2.get('ClassProductsModel');
 				})
-				.then(function(classProductModel){
+				.then(function (classProductModel) {
 					assert.equal(classProductModel.name, 'hello');
 					assert(GlobAsyncStub.calledOnce, 'It should only try to glob the paths once');
 				});
 		});
 
-		it('should only glob files from disk only once for each path specified in paths even when it is running in parallel', function(){
+		it('should only glob files from disk only once for each path specified in paths even when it is running in parallel', function () {
 			var options = {
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1146,7 +1155,7 @@ describe('Di', function () {
 			injector2.set('myValue', 'hello');
 
 			var glob = require('glob');
-			var GlobAsyncStub = sandbox.stub(glob, 'GlobAsync', function(){
+			var GlobAsyncStub = sandbox.stub(glob, 'GlobAsync', function () {
 				return Promise.resolve([
 					Path.join(__dirname, '/fixtures/modules/ClassProductsModel.js')
 				]).delay(200);
@@ -1156,14 +1165,14 @@ describe('Di', function () {
 				injector.get('ClassProductsModel'),
 				injector2.get('ClassProductsModel')
 			])
-				.spread(function(classProductModel, classProductModel2){
+				.spread(function (classProductModel, classProductModel2) {
 					assert.equal(classProductModel.name, 'hello');
 					assert.equal(classProductModel2.name, 'hello');
 					assert(GlobAsyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
-		it('should only read a file once for the same module on the same injector', function(){
+		it('should only read a file once for the same module on the same injector', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1171,22 +1180,22 @@ describe('Di', function () {
 			});
 
 			var fs = require('fs');
-			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function(){
+			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function () {
 				return Promise.resolve('module.exports = "Stub";').delay(200);
 			});
 
 			return injector.get('ClassProductsModel')
-				.then(function(classProductModel){
+				.then(function (classProductModel) {
 					assert.equal(classProductModel, 'Stub');
 					return injector.get('ClassProductsModel');
 				})
-				.then(function(classProductModel){
+				.then(function (classProductModel) {
 					assert.equal(classProductModel, 'Stub');
 					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
-		it('should only read a file once for the same module on the same injector even when it is running in parallel', function(){
+		it('should only read a file once for the same module on the same injector even when it is running in parallel', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1195,7 +1204,7 @@ describe('Di', function () {
 
 			// fixme
 			var fs = require('fs');
-			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function(){
+			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function () {
 				return Promise.resolve('module.exports = "Stub";').delay(200);
 			});
 
@@ -1204,7 +1213,7 @@ describe('Di', function () {
 				injector.get('ClassProductsModel'),
 				injector.get('ClassProductsModel')
 			])
-				.spread(function(classProductModel, classProductModel2, classProductModel3){
+				.spread(function (classProductModel, classProductModel2, classProductModel3) {
 					assert.equal(classProductModel, 'Stub');
 					assert.equal(classProductModel2, 'Stub');
 					assert.equal(classProductModel3, 'Stub');
@@ -1212,7 +1221,7 @@ describe('Di', function () {
 				});
 		});
 
-		it('should only read a file from disk only once for the same module different injectors', function(){
+		it('should only read a file from disk only once for the same module different injectors', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1226,22 +1235,22 @@ describe('Di', function () {
 			});
 
 			var fs = require('fs');
-			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function(){
+			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function () {
 				return Promise.resolve('module.exports = "Stub";').delay(200);
 			});
 
 			return injector.get('ClassProductsModel')
-				.then(function(classProductModel){
+				.then(function (classProductModel) {
 					assert.equal(classProductModel, 'Stub');
 					return injector2.get('ClassProductsModel');
 				})
-				.then(function(classProductModel){
+				.then(function (classProductModel) {
 					assert.equal(classProductModel, 'Stub');
 					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
-		it('should only read a file from disk only once for the same module on different injectors even when it is running in parallel', function(){
+		it('should only read a file from disk only once for the same module on different injectors even when it is running in parallel', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1255,7 +1264,7 @@ describe('Di', function () {
 			});
 
 			var fs = require('fs');
-			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function(){
+			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function () {
 				return Promise.resolve('module.exports = "Stub";').delay(200);
 			});
 
@@ -1263,14 +1272,14 @@ describe('Di', function () {
 				injector.get('ClassProductsModel'),
 				injector2.get('ClassProductsModel')
 			])
-				.spread(function(classProductModel, classProductModel2){
+				.spread(function (classProductModel, classProductModel2) {
 					assert.equal(classProductModel, 'Stub');
 					assert.equal(classProductModel2, 'Stub');
 					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
-		it('should not match file names partially just shortenned paths when exactMatch is not true', function(){
+		it('should not match file names partially just shortenned paths when exactMatch is not true', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1280,32 +1289,249 @@ describe('Di', function () {
 			injector.set('myValue', 'hello');
 
 			return injector.get('ProductsModel')
-				.catch(function(err){
+				.catch(function (err) {
 					error = err;
 				})
-				.finally(function(){
+				.finally(function () {
 					assert.equal(error.message, 'Module ProductsModel Not found');
 				});
 		});
 
-		it('should try loading from node_modules if no module is found (make sure to add node_module paths array to check in)', function(){
-
+		it.skip('should try loading from node_modules if no module is found (make sure to add node_module paths array to check in)', function () {
+			assert(false, 'not implemented');
 		});
 
-		it('should throw an error when loading the same module with a different key', function(){
+		it.skip('should have sinon stubbing built in', function () {
+			assert(false);
+		});
+
+		it.skip('should have linting', function () {
+			assert(false, 'I NEED TO ADD LINTING');
+		});
+
+		it('should throw an error when loading the same module with a different key', function () {
 			// this is actually not worth the effort. Just add to the docs not to do this
 		});
 
-		it('should not load file paths twice for paths previously set and should work even with different aliases when creating child injectors', function(){
+		it('should not load file paths twice for paths previously set and should work even with different aliases when creating child injectors', function () {
 			// i need to add a set timeout here to make sure that the loading of the files is already done before I call get
 
 
 		});
 
-		it('should not reload paths when childInjector is created', function(){
+		it('should not reload paths when childInjector is created', function () {
 			// the loader should have the ability to not reload files from paths already checked (I can probably test this directly on the loader)
 		});
 	});
 
+	describe('Sanbox', function () {
+		it('should let you stub a module method/property for testing', function () {
+
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			var getHttpSpy = injector.stub('request', 'getHttp', function () {
+				return 'stubbedResponse';
+			});
+
+			injector.stub('request', 'name', 'stubbedName');
+
+			injector.set('request', class {
+				constructor() {
+					this.name = 'realName';
+				}
+
+				getHttp() {
+					return 'realResponse';
+				}
+			});
+
+			injector.controller('controller', function (request) {
+				return Promise.resolve(request.getHttp() + ' ' + request.name);
+			});
+
+			// running 2 of them also tests that we don't double wrap method being proxxied
+			return Promise.all([
+				injector.get('controller'),
+				injector.get('controller')
+			])
+				.spread(function (controller1, controller2) {
+					assert.equal(controller1, 'stubbedResponse stubbedName', 'controller should return the stubbed response');
+					assert.equal(controller2, 'stubbedResponse stubbedName', 'controller2 should return the stubbed response');
+					assert(getHttpSpy.calledTwice, 'it should have called the getHttpSpy method twice');
+				})
+				.finally(function () {
+					injector.restore();
+				});
+		});
+		it('should let you stub a whole module for testing', function () {
+
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			var getHttpSpy = injector.stub('request', function () {
+				return Promise.resolve('stubbedResponse');
+			});
+
+			injector.set('request', function () {
+				return function getHttp() {
+					Promise.resolve('realResponse');
+				}
+			});
+
+			injector.controller('controller', function (request) {
+				return request();
+			});
+
+			return Promise.all([
+				injector.get('controller'),
+				injector.get('controller')
+			])
+				.spread(function (controller1, controller2) {
+					assert.equal(controller1, 'stubbedResponse', 'controller should return the stubbed response');
+					assert.equal(controller2, 'stubbedResponse', 'controller2 should return the stubbed response');
+					assert(getHttpSpy.calledTwice, 'it should have called the getHttpSpy method twice');
+				})
+				.finally(function () {
+					injector.restore();
+				});
+		});
+		it('should let you stub a whole value module for testing', function () {
+
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			injector.stub('simpleValue', 'stubbedValue');
+
+			injector.set('simpleValue', 'realValue');
+
+			injector.controller('controller', function (simpleValue) {
+				return Promise.resolve(simpleValue);
+			});
+
+			return Promise.all([
+				injector.get('controller'),
+				injector.get('controller')
+			])
+				.spread(function (controller1, controller2) {
+					assert.equal(controller1, 'stubbedValue', 'controller should return the stubbed value');
+					assert.equal(controller2, 'stubbedValue', 'controller2 should return the stubbed value');
+				})
+				.finally(function () {
+					injector.restore();
+				});
+		});
+
+		it('should allow to stub multiple methods on the same module', function () {
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			injector.stub('request', 'getHttp', function () {
+				return 'hello';
+			});
+
+			injector.stub('request', 'postHttp', function () {
+				return 'world';
+			});
+
+			injector.set('request', class {
+				constructor() {
+				}
+
+				getHttp() {
+					return 'goodbye';
+				}
+
+				postHttp() {
+					return 'friend';
+				}
+			});
+
+			injector.controller('controller', function (request) {
+				return Promise.resolve(request.getHttp() + ' ' + request.postHttp());
+			});
+
+			return injector.get('controller')
+				.then(function (controller) {
+					assert.equal(controller, 'hello world', 'it should retur values from the stubbed methods');
+				});
+
+		});
+
+		it('should restore modules/methods/properties to their original values when using .restore()', function () {
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			injector.stub('request', 'getHttp', function () {
+				return 'stubbedResponse';
+			});
+
+			injector.stub('request', 'name', 'stubbedName');
+			injector.stub('simpleValue', 'stubbedSimpleValue');
+			injector.stub('simpleMethod', function(){
+				return 'stubbedSimpleMethod';
+			});
+
+			injector.set('simpleValue', 'realSimpleValue');
+
+			injector.set('simpleMethod', function(){
+				return function(){
+					return 'realSimpleMethod';
+				}
+			});
+
+			injector.set('request', class {
+				constructor() {
+					this.name = 'realName';
+				}
+
+				getHttp() {
+					return 'realResponse';
+				}
+			});
+
+			injector.controller('controller', function (request, simpleValue, simpleMethod) {
+				return Promise.resolve(request.getHttp() + ' ' + request.name + ' ' + simpleValue + ' ' + simpleMethod());
+			});
+
+			return injector.get('controller')
+				.then(function(controller){
+					assert.equal(controller, 'stubbedResponse stubbedName stubbedSimpleValue stubbedSimpleMethod', 'controller should return the stubbed response');
+					injector.restore();
+					return injector.get('controller');
+				})
+				.then(function(controller){
+					assert.equal(controller, 'realResponse realName realSimpleValue realSimpleMethod', 'controller should return the real response');
+				});
+
+		});
+
+
+	});
 
 });
