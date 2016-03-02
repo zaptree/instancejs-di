@@ -74,6 +74,22 @@ describe('Di', function () {
 			})
 	});
 
+	it('should allow for modules using a class and no contructro', function(){
+		var injector = new Di();
+
+		class MyClass {
+			get name(){
+				return 'hello world';
+			}
+		}
+		injector.set('classWithNoConstructor', MyClass);
+
+		return injector.get('classWithNoConstructor')
+			.then(function (instance) {
+				assert.deepEqual(instance.name, 'hello world', 'it should have populated the field async');
+			});
+	});
+
 	it('test constructor with promise', function () {
 		var injector = new Di();
 
@@ -93,10 +109,6 @@ describe('Di', function () {
 		return injector.get('classWithPromiseConstructor')
 			.then(function (instance) {
 				assert.deepEqual(instance.name, 'hello world', 'it should have populated the field async');
-			});
-		return (new MyClass())
-			.then(function (instance) {
-				assert(instance.name === 'hello world')
 			});
 	});
 
@@ -235,7 +247,6 @@ describe('Di', function () {
 				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
 			})
 	});
-
 
 	it('should create a value with provided function constructor and resolve the dependencies using .$inject method', function () {
 		var injector = new Di();
@@ -567,6 +578,7 @@ describe('Di', function () {
 		})
 
 	});
+
 	describe('types', function () {
 		var factorySpy,
 			factoryMethod;
@@ -1532,6 +1544,22 @@ describe('Di', function () {
 		});
 
 
+	});
+
+	describe('include', function(){
+		it.only('should allow to use include to get an un-instantiated module', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+
+			return injector.get('ChildController')
+				.then( function(childController){
+					assert.equal(childController.hello(), 'hello base', 'it should inherit from the BaseController');
+				});
+
+		});
 	});
 
 });
