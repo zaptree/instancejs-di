@@ -1125,6 +1125,13 @@ describe('Di', function () {
 		});
 
 		it('should only glob files from disk only once for each path specified in paths', function () {
+			var glob = require('glob');
+			var GlobSyncStub = sandbox.stub(glob, 'sync', function () {
+				return [
+					Path.join(__dirname, '/fixtures/modules/ClassProductsModel.js')
+				];
+			});
+
 			var options = {
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1135,13 +1142,6 @@ describe('Di', function () {
 
 			injector.set('myValue', 'hello');
 			injector2.set('myValue', 'hello');
-
-			var glob = require('glob');
-			var GlobAsyncStub = sandbox.stub(glob, 'GlobAsync', function () {
-				return Promise.resolve([
-					Path.join(__dirname, '/fixtures/modules/ClassProductsModel.js')
-				]).delay(200);
-			});
 
 			return injector.get('ClassProductsModel')
 				.then(function (classProductModel) {
@@ -1150,11 +1150,18 @@ describe('Di', function () {
 				})
 				.then(function (classProductModel) {
 					assert.equal(classProductModel.name, 'hello');
-					assert(GlobAsyncStub.calledOnce, 'It should only try to glob the paths once');
+					assert(GlobSyncStub.calledOnce, 'It should only try to glob the paths once');
 				});
 		});
 
 		it('should only glob files from disk only once for each path specified in paths even when it is running in parallel', function () {
+			var glob = require('glob');
+			var GlobSyncStub = sandbox.stub(glob, 'sync', function () {
+				return [
+					Path.join(__dirname, '/fixtures/modules/ClassProductsModel.js')
+				];
+			});
+
 			var options = {
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1166,13 +1173,6 @@ describe('Di', function () {
 			injector.set('myValue', 'hello');
 			injector2.set('myValue', 'hello');
 
-			var glob = require('glob');
-			var GlobAsyncStub = sandbox.stub(glob, 'GlobAsync', function () {
-				return Promise.resolve([
-					Path.join(__dirname, '/fixtures/modules/ClassProductsModel.js')
-				]).delay(200);
-			});
-
 			return Promise.all([
 				injector.get('ClassProductsModel'),
 				injector2.get('ClassProductsModel')
@@ -1180,7 +1180,7 @@ describe('Di', function () {
 				.spread(function (classProductModel, classProductModel2) {
 					assert.equal(classProductModel.name, 'hello');
 					assert.equal(classProductModel2.name, 'hello');
-					assert(GlobAsyncStub.calledOnce, 'It should only try to read the file once');
+					assert(GlobSyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
@@ -1547,7 +1547,7 @@ describe('Di', function () {
 	});
 
 	describe('include', function(){
-		it.only('should allow to use include to get an un-instantiated module', function(){
+		it.skip('should allow to use include to get an un-instantiated module', function(){
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
