@@ -1,8 +1,6 @@
 'use strict';
 
-var BaseController = injector.include('BaseController');
-
-class ChildController extends BaseController{
+class ChildController extends include('BaseController'){
 	constructor(){
 		super();// you must call super if you override the constructor();
 	}
