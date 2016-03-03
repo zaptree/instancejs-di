@@ -1547,7 +1547,7 @@ describe('Di', function () {
 	});
 
 	describe('include', function(){
-		it.skip('should allow to use include to get an un-instantiated module', function(){
+		it('should allow to use include to get an un-instantiated module', function(){
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
