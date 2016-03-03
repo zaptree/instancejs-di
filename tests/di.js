@@ -1192,8 +1192,8 @@ describe('Di', function () {
 			});
 
 			var fs = require('fs');
-			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function () {
-				return Promise.resolve('module.exports = "Stub";').delay(200);
+			var readFileSyncStub = sandbox.stub(fs, 'readFileSync', function () {
+				return 'module.exports = "Stub";';
 			});
 
 			return injector.get('ClassProductsModel')
@@ -1203,7 +1203,7 @@ describe('Di', function () {
 				})
 				.then(function (classProductModel) {
 					assert.equal(classProductModel, 'Stub');
-					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
+					assert(readFileSyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
@@ -1216,8 +1216,8 @@ describe('Di', function () {
 
 			// fixme
 			var fs = require('fs');
-			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function () {
-				return Promise.resolve('module.exports = "Stub";').delay(200);
+			var readFileSyncStub = sandbox.stub(fs, 'readFileSync', function () {
+				return 'module.exports = "Stub";';
 			});
 
 			return Promise.all([
@@ -1229,7 +1229,7 @@ describe('Di', function () {
 					assert.equal(classProductModel, 'Stub');
 					assert.equal(classProductModel2, 'Stub');
 					assert.equal(classProductModel3, 'Stub');
-					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
+					assert(readFileSyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
@@ -1247,8 +1247,8 @@ describe('Di', function () {
 			});
 
 			var fs = require('fs');
-			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function () {
-				return Promise.resolve('module.exports = "Stub";').delay(200);
+			var readFileSyncStub = sandbox.stub(fs, 'readFileSync', function () {
+				return 'module.exports = "Stub";';
 			});
 
 			return injector.get('ClassProductsModel')
@@ -1258,7 +1258,7 @@ describe('Di', function () {
 				})
 				.then(function (classProductModel) {
 					assert.equal(classProductModel, 'Stub');
-					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
+					assert(readFileSyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
@@ -1276,8 +1276,8 @@ describe('Di', function () {
 			});
 
 			var fs = require('fs');
-			var readFileAsyncStub = sandbox.stub(fs, 'readFileAsync', function () {
-				return Promise.resolve('module.exports = "Stub";').delay(200);
+			var readFileSyncStub = sandbox.stub(fs, 'readFileSync', function () {
+				return 'module.exports = "Stub";';
 			});
 
 			return Promise.all([
@@ -1287,7 +1287,7 @@ describe('Di', function () {
 				.spread(function (classProductModel, classProductModel2) {
 					assert.equal(classProductModel, 'Stub');
 					assert.equal(classProductModel2, 'Stub');
-					assert(readFileAsyncStub.calledOnce, 'It should only try to read the file once');
+					assert(readFileSyncStub.calledOnce, 'It should only try to read the file once');
 				});
 		});
 
