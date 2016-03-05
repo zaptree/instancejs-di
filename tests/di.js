@@ -1313,27 +1313,10 @@ describe('Di', function () {
 			assert(false, 'not implemented');
 		});
 
-		it.skip('should have sinon stubbing built in', function () {
-			assert(false);
-		});
-
 		it.skip('should have linting', function () {
 			assert(false, 'I NEED TO ADD LINTING');
 		});
 
-		it('should throw an error when loading the same module with a different key', function () {
-			// this is actually not worth the effort. Just add to the docs not to do this
-		});
-
-		it('should not load file paths twice for paths previously set and should work even with different aliases when creating child injectors', function () {
-			// i need to add a set timeout here to make sure that the loading of the files is already done before I call get
-
-
-		});
-
-		it('should not reload paths when childInjector is created', function () {
-			// the loader should have the ability to not reload files from paths already checked (I can probably test this directly on the loader)
-		});
 	});
 
 	describe('Sanbox', function () {
@@ -1559,6 +1542,43 @@ describe('Di', function () {
 					assert.equal(childController.hello(), 'hello base', 'it should inherit from the BaseController');
 				});
 
+		});
+	});
+
+	describe('loading non injectable moduels', function(){
+		it('should use require to load modules that have a name that matches the standardModuleRegex', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			// if class get's instanciated the .name will be hello not the class name
+			injector.set('myValue', 'hello');
+
+			return injector.get('$$ClassProductsModel')
+				.then(function (classProductModel) {
+					assert.equal(classProductModel.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
+				});
+		});
+		it('should use require to load and load cached module when using different injector', function(){
+			var options = {
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			};
+			var injector1 = new Di(options);
+			var injector2 = new Di(options);
+			injector1.set('myValue', 'hello');
+			injector2.set('myValue', 'hello');
+
+			return Promise.all([
+				injector1.get('$$ClassProductsModel'),
+				injector2.get('$$ClassProductsModel')
+			])
+				.spread(function(classProductModel1, classProductModel2){
+					assert.equal(classProductModel1.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
+					assert.equal(classProductModel2.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
+				})
 		});
 	});
 
