@@ -1,0 +1,1 @@
+throw new Error('This module threw an error');

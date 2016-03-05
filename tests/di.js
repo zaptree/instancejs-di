@@ -1545,7 +1545,7 @@ describe('Di', function () {
 		});
 	});
 
-	describe('loading non injectable moduels', function(){
+	describe('loading non injectable modules', function(){
 		it('should use require to load modules that have a name that matches the standardModuleRegex', function(){
 			var injector = new Di({
 				paths: {
@@ -1579,6 +1579,24 @@ describe('Di', function () {
 					assert.equal(classProductModel1.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
 					assert.equal(classProductModel2.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
 				})
+		});
+		it('should default to loading using require when it can not find a module', function(){
+			var injector = new Di();
+			return injector.get('$$lodash')
+				.then(function(lodash){
+					assert.isFunction(lodash.map, 'it should require loadsh');
+				});
+		});
+		it('should default to loading using require when it can not find a module and not catch errors in the module (making sure we only catch MODULE_NOT_FOUND error)', function(){
+			var injector = new Di();
+			var error;
+			return injector.get(Path.resolve(__dirname, 'fixtures/modules/throws'))
+				.catch(function(err){
+					error = err;
+				})
+				.finally(function(){
+					assert.equal(error.message, 'This module threw an error');
+				});
 		});
 	});
 
