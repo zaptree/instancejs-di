@@ -29,7 +29,7 @@ describe('Di', function () {
 
 	});
 
-	it('should create a simple value and get the value in async mode', function () {
+	it.only('should create a simple value and get the value in async mode', function () {
 		var injector = new Di();
 		injector.set('simpleValue', 'hello');
 
@@ -1582,9 +1582,18 @@ describe('Di', function () {
 		});
 		it('should default to loading using require when it can not find a module', function(){
 			var injector = new Di();
-			return injector.get('$$lodash')
-				.then(function(lodash){
+			injector.set('testClass', class{
+				constructor($$lodash){
+					this._ = $$lodash;
+				}
+			});
+			return Promise.all([
+				injector.get('$$lodash'),
+				injector.get('testClass')
+			])
+				.spread(function(lodash, testClass){
 					assert.isFunction(lodash.map, 'it should require loadsh');
+					assert.isFunction(testClass._.map, 'it should require loadsh');
 				});
 		});
 		it('should default to loading using require when it can not find a module and not catch errors in the module (making sure we only catch MODULE_NOT_FOUND error)', function(){
