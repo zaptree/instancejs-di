@@ -74,11 +74,11 @@ describe('Di', function () {
 			})
 	});
 
-	it('should allow for modules using a class and no contructro', function(){
+	it('should allow for modules using a class and no contructro', function () {
 		var injector = new Di();
 
 		class MyClass {
-			get name(){
+			get name() {
 				return 'hello world';
 			}
 		}
@@ -316,14 +316,42 @@ describe('Di', function () {
 		};
 
 		return Promise.all([
-			test(),
-			test({splitPathRegex: null})
-		])
+				test(),
+				test({splitPathRegex: null})
+			])
 			.spread(function (withSplit, withoutSplit) {
 				assert.equal(withSplit.controller, 'controller1', 'it should replace $ with / when using with split');
 				assert.equal(withoutSplit.controller, 'controller2', 'it should get the module that matches the name exactly');
 			});
 
+	});
+
+	it('should allow to set get with / or with splitPathRegex value interchangeably', function () {
+		var injector1 = new Di({});
+		injector1.set('core$startup', 'hello');
+
+		var injector2 = new Di({});
+		injector2.set('core/startup', 'hello');
+
+		var injector3 = new Di({});
+		injector3.set('core/startup', 'hello');
+
+		var injector4 = new Di({});
+		injector4.set('core$startup', 'hello');
+
+		return Promise
+			.all([
+				injector1.get('core/startup'),
+				injector2.get('core$startup'),
+				injector3.get('core/startup'),
+				injector4.get('core$startup')
+			])
+			.spread(function (val1, val2, val3, val4) {
+				assert.equal(val1, 'hello');
+				assert.equal(val2, 'hello');
+				assert.equal(val3, 'hello');
+				assert.equal(val4, 'hello');
+			});
 	});
 
 	it('should create a value with provided array constructor, resolve the dependencies and get the value in async mode', function () {
@@ -403,10 +431,10 @@ describe('Di', function () {
 			grandchildInjector.set('simpleValue3', 'hello3');
 
 			return Promise.all([
-				grandchildInjector.get('simpleValue'),
-				grandchildInjector.get('simpleValue2'),
-				grandchildInjector.get('simpleValue3')
-			])
+					grandchildInjector.get('simpleValue'),
+					grandchildInjector.get('simpleValue2'),
+					grandchildInjector.get('simpleValue3')
+				])
 				.spread(function (simpleValue, simpleValue2, simpleValue3) {
 					assert.equal(simpleValue, 'hello', 'it should return the value of simpleValue');
 					assert.equal(simpleValue2, 'hello2', 'it should return the value of simpleValue2');
@@ -472,9 +500,9 @@ describe('Di', function () {
 			assert.deepEqual(_.sortBy(Object.keys(childInjector2.$cache)), _.sortBy(['session', 'myController']), 'session and myController  should be saved in the injector that it was set on');
 
 			return Promise.all([
-				childInjector1.get('myController'),
-				childInjector2.get('myController')
-			])
+					childInjector1.get('myController'),
+					childInjector2.get('myController')
+				])
 				.spread(function (controller1, controller2) {
 					assert.equal(controller1.session.data, 'one', 'controller1 should have the correct session');
 					assert.equal(controller2.session.data, 'two', 'controller2 should have the correct session');
@@ -526,9 +554,9 @@ describe('Di', function () {
 			assert.deepEqual(Object.keys(childInjector2.$cache), ['session'], 'session should be saved in the injector that it was set on');
 
 			return Promise.all([
-				childInjector1.get('myController'),
-				childInjector2.get('myController')
-			])
+					childInjector1.get('myController'),
+					childInjector2.get('myController')
+				])
 				.spread(function (controller1, controller2) {
 					assert.equal(controller1.session.data, 'one', 'controller1 should have the correct session');
 					assert.equal(controller2.session.data, 'two', 'controller2 should have the correct session');
@@ -557,13 +585,13 @@ describe('Di', function () {
 			childInjector.set('testTypeSetScope', 'myValueSetScope', 'two');
 
 			return Promise.all([
-				injector.get('myValue'),
-				childInjector.get('myValue'),
-				grandChildInjector.get('myValue'),
-				injector.get('myValueSetScope'),
-				childInjector.get('myValueSetScope'),
-				grandChildInjector.get('myValueSetScope')
-			])
+					injector.get('myValue'),
+					childInjector.get('myValue'),
+					grandChildInjector.get('myValue'),
+					injector.get('myValueSetScope'),
+					childInjector.get('myValueSetScope'),
+					grandChildInjector.get('myValueSetScope')
+				])
 				.spread(function (myValue1, myValue2, myValue3, myValueSetScope1, myValueSetScope2, myValueSetScope3) {
 					assert.equal(myValue1, 'one', 'myValue1 should equal one');
 					assert.equal(myValue2, 'two', 'myValue2 should equal two');
@@ -617,11 +645,11 @@ describe('Di', function () {
 			injector.set('testObjectArray', [testObject]);
 
 			return Promise.all([
-				injector.get('testClass'),
-				injector.get('testObject'),
-				injector.get('testClassArray'),
-				injector.get('testObjectArray')
-			])
+					injector.get('testClass'),
+					injector.get('testObject'),
+					injector.get('testClassArray'),
+					injector.get('testObjectArray')
+				])
 				.spread(function (testClass, testObject, testClassArray, testObjectArray) {
 					assert.equal(factorySpy.callCount, 4, 'it should of called the factory method 2 times');
 					assert.equal(testClass.value, 'hello');
@@ -656,10 +684,10 @@ describe('Di', function () {
 			assert.isUndefined(injector.childType, 'Parent injector should not be able to access types created by child');
 
 			return Promise.all([
-				injector.get('myValue'),
-				childInjector.get('myChildValue'),
-				childInjector.get('myChildOnlyValue')
-			])
+					injector.get('myValue'),
+					childInjector.get('myChildValue'),
+					childInjector.get('myChildOnlyValue')
+				])
 				.spread(function (myValue, myChildValue, myChildOnlyValue) {
 					assert.equal(factorySpy.callCount, 2);
 					assert.equal(myValue, 'one');
@@ -801,9 +829,9 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('random'),
-				injector.get('random')
-			])
+					injector.get('random'),
+					injector.get('random')
+				])
 				.spread(function (random1, random2) {
 					assert(factorySpy.calledOnce, 'It should call the factory only once');
 					assert.isNumber(random1, 'random should be a number');
@@ -831,10 +859,10 @@ describe('Di', function () {
 			var grandchildInjector = childInjector.createChild();
 
 			return Promise.all([
-				injector.get('random'),
-				childInjector.get('random'),
-				grandchildInjector.get('random')
-			])
+					injector.get('random'),
+					childInjector.get('random'),
+					grandchildInjector.get('random')
+				])
 				.spread(function (random, random2, random3) {
 					assert(factorySpy.calledOnce, 'It should call the factory only once');
 					assert.isNumber(random, 'random should be a number');
@@ -857,9 +885,9 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('random'),
-				injector.get('random')
-			])
+					injector.get('random'),
+					injector.get('random')
+				])
 				.spread(function (random1, random2) {
 					assert(factorySpy.calledOnce, 'It should call the factory only once');
 					assert.isNumber(random1, 'random should be a number');
@@ -886,13 +914,13 @@ describe('Di', function () {
 			var grandchildInjector = childInjector.createChild();
 
 			return Promise.all([
-				injector.get('random'),
-				injector.get('random'),
-				childInjector.get('random'),
-				childInjector.get('random'),
-				grandchildInjector.get('random'),
-				grandchildInjector.get('random')
-			])
+					injector.get('random'),
+					injector.get('random'),
+					childInjector.get('random'),
+					childInjector.get('random'),
+					grandchildInjector.get('random'),
+					grandchildInjector.get('random')
+				])
 				.spread(function (random1_1, random1_2, random2_1, random_2_2, random3_1, random3_2) {
 					assert.equal(factorySpy.callCount, 3, 'It should call the factory 3 times');
 
@@ -925,10 +953,10 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('random'),
-				injector.get('random'),
-				injector.get('random')
-			])
+					injector.get('random'),
+					injector.get('random'),
+					injector.get('random')
+				])
 				.spread(function (random1, random2, random3) {
 					assert.equal(factorySpy.callCount, 3, 'It should call the factory 3 times');
 					assert.isNumber(random1, 'random1 should be a number');
@@ -951,9 +979,9 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('staticFunction'),
-				injector.get('nonStaticFunction')
-			])
+					injector.get('staticFunction'),
+					injector.get('nonStaticFunction')
+				])
 				.spread(function (valueStatic, valueNonStatic) {
 					assert.equal(valueStatic, 'hello', 'it should return the string value');
 					assert.isObject(valueNonStatic, 'it should return an object when not using static');
@@ -1005,13 +1033,13 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('FakeModelTrick'),
-				injector.get('ProductsModel'),
-				injector.get('ProductsController'),
-				injector.get('UsersModel'),
-				injector.get('UsersController'),
-				injector.get('CheckoutController')
-			])
+					injector.get('FakeModelTrick'),
+					injector.get('ProductsModel'),
+					injector.get('ProductsController'),
+					injector.get('UsersModel'),
+					injector.get('UsersController'),
+					injector.get('CheckoutController')
+				])
 				.spread(function (fakeModelTrick, productsModel, productsController, usersModel, usersController, checkoutController) {
 					assert.equal(fakeModelTrick, 'trickModel');
 					assert.equal(productsModel, 'model');
@@ -1039,9 +1067,9 @@ describe('Di', function () {
 			};
 			injector.testType('myController', controller);
 			return Promise.all([
-				injector.get('myController'),
-				injector.get('myController')
-			])
+					injector.get('myController'),
+					injector.get('myController')
+				])
 				.spread(function (controller1, controller2) {
 					controller1.name = 'hello';
 					assert(controller2.name !== 'hello');
@@ -1174,9 +1202,9 @@ describe('Di', function () {
 			injector2.set('myValue', 'hello');
 
 			return Promise.all([
-				injector.get('ClassProductsModel'),
-				injector2.get('ClassProductsModel')
-			])
+					injector.get('ClassProductsModel'),
+					injector2.get('ClassProductsModel')
+				])
 				.spread(function (classProductModel, classProductModel2) {
 					assert.equal(classProductModel.name, 'hello');
 					assert.equal(classProductModel2.name, 'hello');
@@ -1221,10 +1249,10 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('ClassProductsModel'),
-				injector.get('ClassProductsModel'),
-				injector.get('ClassProductsModel')
-			])
+					injector.get('ClassProductsModel'),
+					injector.get('ClassProductsModel'),
+					injector.get('ClassProductsModel')
+				])
 				.spread(function (classProductModel, classProductModel2, classProductModel3) {
 					assert.equal(classProductModel, 'Stub');
 					assert.equal(classProductModel2, 'Stub');
@@ -1281,9 +1309,9 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('ClassProductsModel'),
-				injector2.get('ClassProductsModel')
-			])
+					injector.get('ClassProductsModel'),
+					injector2.get('ClassProductsModel')
+				])
 				.spread(function (classProductModel, classProductModel2) {
 					assert.equal(classProductModel, 'Stub');
 					assert.equal(classProductModel2, 'Stub');
@@ -1352,9 +1380,9 @@ describe('Di', function () {
 
 			// running 2 of them also tests that we don't double wrap method being proxxied
 			return Promise.all([
-				injector.get('controller'),
-				injector.get('controller')
-			])
+					injector.get('controller'),
+					injector.get('controller')
+				])
 				.spread(function (controller1, controller2) {
 					assert.equal(controller1, 'stubbedResponse stubbedName', 'controller should return the stubbed response');
 					assert.equal(controller2, 'stubbedResponse stubbedName', 'controller2 should return the stubbed response');
@@ -1389,9 +1417,9 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('controller'),
-				injector.get('controller')
-			])
+					injector.get('controller'),
+					injector.get('controller')
+				])
 				.spread(function (controller1, controller2) {
 					assert.equal(controller1, 'stubbedResponse', 'controller should return the stubbed response');
 					assert.equal(controller2, 'stubbedResponse', 'controller2 should return the stubbed response');
@@ -1420,9 +1448,9 @@ describe('Di', function () {
 			});
 
 			return Promise.all([
-				injector.get('controller'),
-				injector.get('controller')
-			])
+					injector.get('controller'),
+					injector.get('controller')
+				])
 				.spread(function (controller1, controller2) {
 					assert.equal(controller1, 'stubbedValue', 'controller should return the stubbed value');
 					assert.equal(controller2, 'stubbedValue', 'controller2 should return the stubbed value');
@@ -1488,14 +1516,14 @@ describe('Di', function () {
 
 			injector.stub('request', 'name', 'stubbedName');
 			injector.stub('simpleValue', 'stubbedSimpleValue');
-			injector.stub('simpleMethod', function(){
+			injector.stub('simpleMethod', function () {
 				return 'stubbedSimpleMethod';
 			});
 
 			injector.set('simpleValue', 'realSimpleValue');
 
-			injector.set('simpleMethod', function(){
-				return function(){
+			injector.set('simpleMethod', function () {
+				return function () {
 					return 'realSimpleMethod';
 				}
 			});
@@ -1515,12 +1543,12 @@ describe('Di', function () {
 			});
 
 			return injector.get('controller')
-				.then(function(controller){
+				.then(function (controller) {
 					assert.equal(controller, 'stubbedResponse stubbedName stubbedSimpleValue stubbedSimpleMethod', 'controller should return the stubbed response');
 					injector.restore();
 					return injector.get('controller');
 				})
-				.then(function(controller){
+				.then(function (controller) {
 					assert.equal(controller, 'realResponse realName realSimpleValue realSimpleMethod', 'controller should return the real response');
 				});
 
@@ -1529,8 +1557,8 @@ describe('Di', function () {
 
 	});
 
-	describe('include', function(){
-		it('should allow to use include to get an un-instantiated module', function(){
+	describe('include', function () {
+		it('should allow to use include to get an un-instantiated module', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1538,15 +1566,15 @@ describe('Di', function () {
 			});
 
 			return injector.get('ChildController')
-				.then( function(childController){
+				.then(function (childController) {
 					assert.equal(childController.hello(), 'hello base', 'it should inherit from the BaseController');
 				});
 
 		});
 	});
 
-	describe('loading non injectable modules', function(){
-		it('should use require to load modules that have a name that matches the standardModuleRegex', function(){
+	describe('loading non injectable modules', function () {
+		it('should use require to load modules that have a name that matches the standardModuleRegex', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1560,7 +1588,7 @@ describe('Di', function () {
 					assert.equal(classProductModel.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
 				});
 		});
-		it('should use require to load and load cached module when using different injector', function(){
+		it('should use require to load and load cached module when using different injector', function () {
 			var options = {
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1572,38 +1600,38 @@ describe('Di', function () {
 			injector2.set('myValue', 'hello');
 
 			return Promise.all([
-				injector1.get('$$ClassProductsModel'),
-				injector2.get('$$ClassProductsModel')
-			])
-				.spread(function(classProductModel1, classProductModel2){
+					injector1.get('$$ClassProductsModel'),
+					injector2.get('$$ClassProductsModel')
+				])
+				.spread(function (classProductModel1, classProductModel2) {
 					assert.equal(classProductModel1.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
 					assert.equal(classProductModel2.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
 				})
 		});
-		it('should default to loading using require when it can not find a module', function(){
+		it('should default to loading using require when it can not find a module', function () {
 			var injector = new Di();
-			injector.set('testClass', class{
-				constructor($$lodash){
+			injector.set('testClass', class {
+				constructor($$lodash) {
 					this._ = $$lodash;
 				}
 			});
 			return Promise.all([
-				injector.get('$$lodash'),
-				injector.get('testClass')
-			])
-				.spread(function(lodash, testClass){
+					injector.get('$$lodash'),
+					injector.get('testClass')
+				])
+				.spread(function (lodash, testClass) {
 					assert.isFunction(lodash.map, 'it should require loadsh');
 					assert.isFunction(testClass._.map, 'it should require loadsh');
 				});
 		});
-		it('should default to loading using require when it can not find a module and not catch errors in the module (making sure we only catch MODULE_NOT_FOUND error)', function(){
+		it('should default to loading using require when it can not find a module and not catch errors in the module (making sure we only catch MODULE_NOT_FOUND error)', function () {
 			var injector = new Di();
 			var error;
 			return injector.get(Path.resolve(__dirname, 'fixtures/modules/throws'))
-				.catch(function(err){
+				.catch(function (err) {
 					error = err;
 				})
-				.finally(function(){
+				.finally(function () {
 					assert.equal(error.message, 'This module threw an error');
 				});
 		});
