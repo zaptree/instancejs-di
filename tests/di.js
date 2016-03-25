@@ -29,7 +29,7 @@ describe('Di', function () {
 
 	});
 
-	it.only('should create a simple value and get the value in async mode', function () {
+	it('should create a simple value and get the value in async mode', function () {
 		var injector = new Di();
 		injector.set('simpleValue', 'hello');
 
