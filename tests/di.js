@@ -1337,6 +1337,26 @@ describe('Di', function () {
 				});
 		});
 
+		it.skip('should not load the same module twice if it is the same module but loaded with a different path', function(){
+			// TODO: I really want this feature but it is not very easy to implement, I should prioritize for the next version
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+
+			return Promise
+				.all([
+					injector.get('ChildController'),
+					injector.get('modules/ChildController'),
+					injector.get('modules$ChildController')
+				])
+				.spread(function(childController, childController2, childController3){
+					assert.equal(childController.random, childController2.random);
+					assert.equal(childController.random, childController3.random);
+				});
+		});
+
 		it.skip('should try loading from node_modules if no module is found (make sure to add node_module paths array to check in)', function () {
 			assert(false, 'not implemented');
 		});
