@@ -1096,6 +1096,32 @@ describe('Di', function () {
 
 		});
 
+		it('should load external files in nested directories', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			injector.set('myValue', 'hello');
+
+			return injector.get('NestedController')
+				.then(function (nestedController) {
+					assert.equal(nestedController.name, 'hello', 'it should load the NestedController and resolve the dependencies');
+				});
+		});
+
+		it('should throw an error when trying to include a file that does not exist', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			var run = function(){
+				injector.include('ModuleDoesNotExist');
+			};
+			assert.throws(run, 'Failed to include ModuleDoesNotExist. File not found');
+		});
+
 		it('should not autoload an external class with a partial name when options.exactMatch is true', function () {
 			var injector = new Di({
 				exactMatch: true,
@@ -1334,6 +1360,27 @@ describe('Di', function () {
 				})
 				.finally(function () {
 					assert.equal(error.message, 'Module ProductsModel Not found');
+				});
+		});
+
+		it('should load an external factory file when the factory in the type is a moduleName', function(){
+			var injector = new Di({
+				types: {
+					value: {
+						singleton: true,
+						scope: '/',
+						factory: 'valueFactory'
+					}
+				},
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			injector.set('value', 'myValue', 'hello');
+
+			return injector.get('myValue')
+				.then(function(val){
+					assert.equal(val, 'hello world');
 				});
 		});
 
