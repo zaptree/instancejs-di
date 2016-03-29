@@ -1384,6 +1384,20 @@ describe('Di', function () {
 				});
 		});
 
+		it('should have available __dirname __filename require like when loading module with require', function(){
+			var injector = new Di({
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			return injector.get('Globals')
+				.then(function(globalsInstance){
+					assert.equal(globalsInstance.dirname(), Path.resolve(__dirname, 'fixtures/modules/'));
+					assert.equal(globalsInstance.filename(), Path.resolve(__dirname, 'fixtures/modules/Globals.js'));
+					assert.isFunction(globalsInstance.require());
+				});
+		});
+
 		it.skip('should not load the same module twice if it is the same module but loaded with a different path', function(){
 			// TODO: I really want this feature but it is not very easy to implement, I should prioritize for the next version
 			var injector = new Di({
