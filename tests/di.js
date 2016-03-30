@@ -603,7 +603,75 @@ describe('Di', function () {
 					assert.equal(myValueSetScope3, 'two', 'myValueSetScope3 should equal two');
 				});
 
-		})
+		});
+
+		it('should properly set scopePath before it is needed', function(){
+			var injector = new Di({
+				types: {
+					'typeFactory': {
+						singleton: true,
+						scope: '/project/',
+					}
+				}
+			});
+
+			var childInjector = injector.createChild({
+				$scopeName:'project',
+				types: {
+					'value': {
+						'singleton': true,
+						'scope': '/project/',
+						factory: function(){
+							return function(module){
+								return module.$constructor + ' world';
+							};
+						}
+					}
+				}
+			});
+
+			childInjector.set('value','MyValue', 'hello');
+
+			return childInjector.get('MyValue')
+				.then(function(myValue){
+					assert.equal(myValue, 'hello world');
+				});
+
+
+		});
+
+		it('should allow for loose scope and setScope', function(){
+			var injector = new Di({
+				types: {
+					'typeFactory': {
+						singleton: true,
+						looseScope: true,
+						scope: '/project/',
+					},
+					'value': {
+						'singleton': true,
+						'scope': '/project/',
+						looseScope: true,
+						factory: function(){
+							return function(module){
+								return module.$constructor + ' world';
+							};
+						}
+					}
+				}
+			});
+
+			var childInjector = injector.createChild({
+				$scopeName:'project'
+			});
+
+			injector.set('value','MyValue', 'hello');
+
+			return injector.get('MyValue')
+				.then(function(myValue){
+					assert.equal(myValue, 'hello world');
+				});
+		});
 
 	});
 
@@ -717,6 +785,36 @@ describe('Di', function () {
 				});
 			};
 			assert.throws(run, 'Trying to save module out of scope');
+
+
+		});
+
+		it('should throw an error when trying to get a type out of scope', function () {
+			var di = new Di({
+				types: {
+					controller: {
+						singleton: true,
+						// need to set the scope to root otherwise we will just get module not found error since
+						// it does not exist in the root injector
+						setScope: '/',
+						scope: '/request/'
+					}
+				}
+			});
+			var requestScope = di.createChild({
+				$scopeName: 'request'
+			});
+
+			requestScope.controller('MyController', function () {});
+			var error;
+			return di.get('MyController')
+				.catch(function(err){
+					error = err;
+				})
+				.finally(function(){
+					assert.equal(error.message, 'Trying to get module MyController out of scope. Current scope: / Expected scope: /request/');
+				});
+
 
 
 		});
