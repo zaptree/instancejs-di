@@ -605,7 +605,7 @@ describe('Di', function () {
 
 		});
 
-		it('should properly set scopePath before it is needed', function(){
+		it('should properly set scopePath before it is needed', function () {
 			var injector = new Di({
 				types: {
 					'typeFactory': {
@@ -616,13 +616,13 @@ describe('Di', function () {
 			});
 
 			var childInjector = injector.createChild({
-				$scopeName:'project',
+				$scopeName: 'project',
 				types: {
 					'value': {
 						'singleton': true,
 						'scope': '/project/',
-						factory: function(){
-							return function(module){
+						factory: function () {
+							return function (module) {
 								return module.$constructor + ' world';
 							};
 						}
@@ -630,30 +630,30 @@ describe('Di', function () {
 				}
 			});
 
-			childInjector.set('value','MyValue', 'hello');
+			childInjector.set('value', 'MyValue', 'hello');
 
 			return childInjector.get('MyValue')
-				.then(function(myValue){
+				.then(function (myValue) {
 					assert.equal(myValue, 'hello world');
 				});
 
 
 		});
 
-		it('should allow for loose scope and setScope', function(){
+		it('should allow for loose scope and setScope', function () {
 			var injector = new Di({
 				types: {
 					'typeFactory': {
 						singleton: true,
 						looseScope: true,
-						scope: '/project/',
+						scope: '/project/'
 					},
 					'value': {
 						'singleton': true,
 						'scope': '/project/',
 						looseScope: true,
-						factory: function(){
-							return function(module){
+						factory: function () {
+							return function (module) {
 								return module.$constructor + ' world';
 							};
 						}
@@ -662,15 +662,113 @@ describe('Di', function () {
 			});
 
 			var childInjector = injector.createChild({
-				$scopeName:'project'
+				$scopeName: 'project'
 			});
 
-			injector.set('value','MyValue', 'hello');
+			injector.set('value', 'MyValue', 'hello');
 
 			return injector.get('MyValue')
-				.then(function(myValue){
+				.then(function (myValue) {
 					assert.equal(myValue, 'hello world');
 				});
+		});
+
+		it.skip('Dangers of using looseScope are shown here. The only place where it can be ok is the typeFactory', function () {
+			var injector = new Di({
+				types: {
+					controller: {
+						looseScope: true,
+						singleton: true,
+						scope: '/request/',
+						setScope: '/'
+					}
+				}
+			});
+			var childInjector = injector.createChild({
+				$scopeName: 'request'
+			});
+
+			childInjector.controller('controller', function () {
+				this.name = Date.now();
+			});
+			return injector.get('controller')
+				.then(function (controller1) {
+					return childInjector.get('controller')
+						.then(function (controller2) {
+							assert.notEqual(controller1.name, controller2.name);
+						});
+				});
+
+		});
+
+		it('should throw an error when a dependency is out of scope from the scope of module even if the module was created with allowed scope injector ', function () {
+			var injector = new Di();
+			var childInjector = injector.createChild({
+				$scopeName: 'request',
+				types: {
+					controller: {
+						singleton: true,
+						scope: '/request/',
+						setScope: '/'
+					}
+				}
+			});
+
+			injector.singleton('configurator', function (myController) {
+				this.result = myController.name + ' world';
+			});
+			childInjector.controller('myController', function () {
+				this.name = 'hello';
+			});
+			var error;
+			return Promise
+				.all([
+					childInjector.get('configurator')
+				])
+				.catch(function (err) {
+					error = err;
+				})
+				.finally(function () {
+					assert.equal(error.message, 'Type controller does not exist in scope /');
+				});
+
+		});
+
+		it('should throw a helpful error when trying to access a type that does not exist in the current scope', function () {
+			// assert(false, 'I do not think it will throw an error but will have adverse effects');
+			// I will probably need to maybe call create with the intended injector? or test
+			var injector = new Di({
+				types: {}
+			});
+			var childInjector = injector.createChild({
+				$scopeName: 'request',
+				types: {
+					controller: {
+						singleton: true,
+						scope: '/request/',
+						setScope: '/'
+					}
+				}
+			});
+
+			injector.singleton('configurator', function (myController) {
+				this.result = myController.name + ' world';
+			});
+			childInjector.controller('myController', function () {
+				this.name = 'hello';
+			});
+			var error;
+			return Promise
+				.all([
+					injector.get('configurator')
+				])
+				.catch(function (err) {
+					error = err;
+				})
+				.finally(function () {
+					assert.equal(error.message, 'Type controller does not exist in scope /');
+				});
+
 		});
 
 	});
@@ -805,16 +903,16 @@ describe('Di', function () {
 				$scopeName: 'request'
 			});
 
-			requestScope.controller('MyController', function () {});
+			requestScope.controller('MyController', function () {
+			});
 			var error;
 			return di.get('MyController')
-				.catch(function(err){
+				.catch(function (err) {
 					error = err;
 				})
-				.finally(function(){
+				.finally(function () {
 					assert.equal(error.message, 'Trying to get module MyController out of scope. Current scope: / Expected scope: /request/');
 				});
-
 
 
 		});
@@ -1194,7 +1292,7 @@ describe('Di', function () {
 
 		});
 
-		it('should load external files in nested directories', function(){
+		it('should load external files in nested directories', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
@@ -1208,13 +1306,13 @@ describe('Di', function () {
 				});
 		});
 
-		it('should throw an error when trying to include a file that does not exist', function(){
+		it('should throw an error when trying to include a file that does not exist', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
 				}
 			});
-			var run = function(){
+			var run = function () {
 				injector.include('ModuleDoesNotExist');
 			};
 			assert.throws(run, 'Failed to include ModuleDoesNotExist. File not found');
@@ -1461,7 +1559,7 @@ describe('Di', function () {
 				});
 		});
 
-		it('should load an external factory file when the factory in the type is a moduleName', function(){
+		it('should load an external factory file when the factory in the type is a moduleName', function () {
 			var injector = new Di({
 				types: {
 					value: {
@@ -1477,26 +1575,26 @@ describe('Di', function () {
 			injector.set('value', 'myValue', 'hello');
 
 			return injector.get('myValue')
-				.then(function(val){
+				.then(function (val) {
 					assert.equal(val, 'hello world');
 				});
 		});
 
-		it('should have available __dirname __filename require like when loading module with require', function(){
+		it('should have available __dirname __filename require like when loading module with require', function () {
 			var injector = new Di({
 				paths: {
 					'modules/': Path.resolve(__dirname, 'fixtures/modules')
 				}
 			});
 			return injector.get('Globals')
-				.then(function(globalsInstance){
+				.then(function (globalsInstance) {
 					assert.equal(globalsInstance.dirname(), Path.resolve(__dirname, 'fixtures/modules/'));
 					assert.equal(globalsInstance.filename(), Path.resolve(__dirname, 'fixtures/modules/Globals.js'));
 					assert.isFunction(globalsInstance.require());
 				});
 		});
 
-		it.skip('should not load the same module twice if it is the same module but loaded with a different path', function(){
+		it.skip('should not load the same module twice if it is the same module but loaded with a different path', function () {
 			// TODO: I really want this feature but it is not very easy to implement, I should prioritize for the next version
 			var injector = new Di({
 				paths: {
@@ -1510,7 +1608,7 @@ describe('Di', function () {
 					injector.get('modules/ChildController'),
 					injector.get('modules$ChildController')
 				])
-				.spread(function(childController, childController2, childController3){
+				.spread(function (childController, childController2, childController3) {
 					assert.equal(childController.random, childController2.random);
 					assert.equal(childController.random, childController3.random);
 				});
