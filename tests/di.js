@@ -179,8 +179,12 @@ describe('Di', function () {
 			})
 	});
 
+	it('should use the initialize object constructor only when the options is enabled')
+
 	it('should create a value with provided object constructor, resolve the dependencies using .$inject method', function () {
-		var injector = new Di();
+		var injector = new Di({
+			objectClasses: true
+		});
 		var myObject = {
 			$inject: ['myValue'],
 			initialize: function (myValue) {
@@ -197,7 +201,9 @@ describe('Di', function () {
 	});
 
 	it('should create a value with provided object constructor, resolve the dependencies using argument toString parsing', function () {
-		var injector = new Di();
+		var injector = new Di({
+			objectClasses: true
+		});
 		var myObject = {
 			initialize: function (myValue) {
 				this.value = myValue;
@@ -213,7 +219,9 @@ describe('Di', function () {
 	});
 
 	it('should create a value with provided array object constructor, resolve the dependencies', function () {
-		var injector = new Di();
+		var injector = new Di({
+			objectClasses: true
+		});
 		var myObject = {
 			initialize: function (myValue) {
 				this.value = myValue;
@@ -516,6 +524,7 @@ describe('Di', function () {
 			// although we want to save the session in 2 different scope.$cache the controller is always the same so
 			// we can use setScope: '/'. In most cases using setScope: '/' is preferable and the default
 			var injector = new Di({
+				objectClasses: true,
 				types: {
 					controller: {
 						singleton: true,
@@ -786,6 +795,7 @@ describe('Di', function () {
 
 		it('should get type from $type property using class', function () {
 			var injector = new Di({
+				objectClasses: true,
 				types: {
 					testType: {
 						singleton: true,
