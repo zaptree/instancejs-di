@@ -1624,6 +1624,37 @@ describe('Di', function () {
 				});
 		});
 
+		it('should not run factory method "require module" more than once', function(){
+			var injector = new Di({
+				types: {
+					type1: {
+						singleton: true,
+						scope: '/',
+						factory: 'testFactory'
+					},
+					type2: {
+						singleton: true,
+						scope: '/',
+						factory: 'testFactory'
+					}
+				},
+				paths: {
+					'modules/': Path.resolve(__dirname, 'fixtures/modules')
+				}
+			});
+			injector.type1('value1', 'hello');
+			injector.type2('value2', 'hello');
+			return Promise
+				.all([
+					injector.get('value1'),
+					injector.get('value2')
+				])
+				.spread(function(value1, value2){
+					assert.equal(value1, value2);
+				});
+
+		});
+
 		it.skip('should try loading from node_modules if no module is found (make sure to add node_module paths array to check in)', function () {
 			assert(false, 'not implemented');
 		});
@@ -1635,6 +1666,72 @@ describe('Di', function () {
 	});
 
 	describe('Sanbox', function () {
+		it('should do some simple sinon tests', function(){
+			var obj = {
+				name: 'john',
+				getName: function(){
+					return this.name;
+				}
+			};
+
+			var res, stub, spy;
+			var sandbox = sinon.sandbox.create();
+
+			// test creating a method stub
+			stub = sandbox.stub(obj, 'getName', function(){
+				return 'alex';
+			});
+			res = obj.getName();
+			assert(stub.calledOnce);
+			assert.equal(res, 'alex', 'result should be value returned from the stubbed value');
+
+			// test restoring stub
+			sandbox.restore();
+			assert(obj.getName(), 'john');
+			assert(stub.calledOnce);
+
+			// test creating a empty method stub
+			stub = sandbox.stub(obj, 'getName');
+			res = obj.getName();
+			assert(stub.calledOnce);
+			assert.equal(res, undefined, 'result should be undefined since we did not specify a replacement method');
+
+			sandbox.restore();
+
+			// test creating a property stub
+			sandbox.stub(obj, 'name', 'nick');
+			res = obj.getName();
+			assert.equal(res, 'nick');
+			sandbox.restore();
+
+			// test creating a spy with sandbox
+			spy = sandbox.spy(obj, 'getName');
+			res = obj.getName();
+			assert(spy.calledOnce);
+			assert.equal(res, 'john');
+			sandbox.restore();
+
+			// use preMadeSpy as sanbox.spy at a later time (this is a test on how to implement async spy)
+			var spy = sinon.spy();
+			var original = obj.getName;
+			sandbox.stub(obj, 'getName', function(){
+				spy.apply(spy, arguments);
+				return original.apply(obj, arguments);
+			});
+			var result = obj.getName();
+			assert(spy.calledOnce);
+			var result = obj.getName();
+			assert(spy.calledTwice);
+			assert.equal(result, 'john');
+
+
+		});
+
+		it.skip('should check that when 2 child injectors have a module that shares name the stub is not applied to both (which it is no)', function(){
+			// todo: saving stubs/spies in root injector was a bad idea
+			assert(false);
+		});
+
 		it('should let you stub a module method/property for testing', function () {
 
 			var injector = new Di({
@@ -1679,6 +1776,50 @@ describe('Di', function () {
 					injector.restore();
 				});
 		});
+
+		it('should let you spy a module method for testing', function () {
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			var getHttpSpy = injector.spy('request', 'getHttp');
+			// adding another spy to test not creating sandbox twice (really for full test coverage)
+			injector.spy('request', 'postHttp');
+
+			injector.set('request', class {
+				getHttp() {
+					return 'realResponse';
+				}
+				postHttp() {
+				}
+			});
+
+			injector.controller('controller', function (request) {
+				return Promise.resolve(request.getHttp());
+			});
+
+			// running 2 of them also tests that we don't double wrap method being proxxied
+			return injector.get('controller')
+				.then(function (controllerResponse) {
+					assert.equal(controllerResponse, 'realResponse', 'controller should return the real response');
+					assert(getHttpSpy.calledOnce, 'it should have called the getHttpSpy method once');
+
+					// make sure it doesn't try to double wrap method
+					return injector.get('controller');
+				})
+				.then(function(controllerResponse){
+					assert.equal(controllerResponse, 'realResponse', 'controller should return the real response');
+					assert(getHttpSpy.calledTwice, 'it should have called the getHttpSpy method once');
+				})
+				.finally(function () {
+					injector.restore();
+				});
+		});
+
 		it('should let you stub a whole module for testing', function () {
 
 			var injector = new Di({
@@ -1716,6 +1857,39 @@ describe('Di', function () {
 					injector.restore();
 				});
 		});
+
+		it('should let you spy a whole module for testing', function () {
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			var requestSpy = injector.spy('request');
+
+			injector.set('request', function () {
+				return function getHttp() {
+					return Promise.resolve('realResponse');
+				}
+			});
+
+			injector.controller('controller', function (request) {
+				return request();
+			});
+
+			// running 2 of them also tests that we don't double wrap method being proxxied
+			return injector.get('controller')
+				.then(function (controllerResponse) {
+					assert.equal(controllerResponse, 'realResponse', 'controller should return the real response');
+					assert(requestSpy.calledOnce, 'it should have called the getHttpSpy method once');
+				})
+				.finally(function () {
+					injector.restore();
+				});
+		});
+
 		it('should let you stub a whole value module for testing', function () {
 
 			var injector = new Di({
@@ -1840,8 +2014,6 @@ describe('Di', function () {
 				});
 
 		});
-
-
 	});
 
 	describe('include', function () {
