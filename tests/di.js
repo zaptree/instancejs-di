@@ -1727,9 +1727,49 @@ describe('Di', function () {
 
 		});
 
-		it.skip('should check that when 2 child injectors have a module that shares name the stub is not applied to both (which it is no)', function(){
-			// todo: saving stubs/spies in root injector was a bad idea
-			assert(false);
+		it.only('should check that when 2 child injectors have a module that shares name the stub is not applied to both (which it is now)', function(){
+
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			var child1 = injector.createChild();
+			var child2 = injector.createChild();
+
+			child1.controller('controller', {
+				getName: function(){
+					return 'originalName';
+				}
+			});
+
+			child2.controller('controller', {
+				getName: function(){
+					return 'originalName';
+				}
+			});
+
+			child1.stub('controller', 'getName', function(){
+				return 'stubbedName';
+			});
+
+			return Promise
+				.all([
+					child1.get('controller'),
+					child2.get('controller')
+				])
+				.spread(function(controller1, controller2){
+					assert.equal(controller1.getName(), 'stubbedName');
+					assert.equal(controller2.getName(), 'originalName');
+
+					// we still store the sandbox in the root so restoring any of the injectors will restore all
+					child2.restore();
+					assert.equal(controller1.getName(), 'originalName');
+					assert.equal(controller2.getName(), 'originalName');
+				});
 		});
 
 		it('should let you stub a module method/property for testing', function () {
