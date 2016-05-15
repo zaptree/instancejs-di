@@ -1727,7 +1727,7 @@ describe('Di', function () {
 
 		});
 
-		it.only('should check that when 2 child injectors have a module that shares name the stub is not applied to both (which it is now)', function(){
+		it('should check that when 2 child injectors have a module that shares name the stub is not applied to both (which it is now)', function(){
 
 			var injector = new Di({
 				types: {
@@ -1743,18 +1743,25 @@ describe('Di', function () {
 			child1.controller('controller', {
 				getName: function(){
 					return 'originalName';
+				},
+				getType: function(){
+					return 'originalType';
 				}
 			});
 
 			child2.controller('controller', {
 				getName: function(){
 					return 'originalName';
+				},
+				getType: function(){
+					return 'originalType';
 				}
 			});
 
 			child1.stub('controller', 'getName', function(){
 				return 'stubbedName';
 			});
+			var spy = child1.spy('controller', 'getType');
 
 			return Promise
 				.all([
@@ -1765,10 +1772,53 @@ describe('Di', function () {
 					assert.equal(controller1.getName(), 'stubbedName');
 					assert.equal(controller2.getName(), 'originalName');
 
+					controller1.getType();
+					controller2.getType();
+
+					assert(spy.calledOnce);
+
 					// we still store the sandbox in the root so restoring any of the injectors will restore all
 					child2.restore();
+
 					assert.equal(controller1.getName(), 'originalName');
 					assert.equal(controller2.getName(), 'originalName');
+
+					controller1.getType();
+					assert(spy.calledOnce);
+				});
+		});
+
+		it('should get spies/stubs from parent injectors if not in current', function(){
+			var injector = new Di({
+				types: {
+					controller: {
+						singleton: false
+					}
+				}
+			});
+
+			var child = injector.createChild();
+
+			child.controller('controller', {
+				getName: function(){
+					return 'originalName';
+				},
+				getType: function(){
+					return 'originalType';
+				}
+			});
+
+
+			injector.stub('controller', 'getName', function(){
+				return 'stubbedName';
+			});
+			var spy = injector.spy('controller', 'getType');
+
+			return child.get('controller')
+				.then(function(controller){
+					assert.equal(controller.getName(), 'stubbedName');
+					controller.getType();
+					assert(spy.calledOnce);
 				});
 		});
 
