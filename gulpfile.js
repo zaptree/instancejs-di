@@ -8,6 +8,7 @@ gulp.task('test', function (done) {
 		.pipe(istanbul()) // Covering files
 		.pipe(istanbul.hookRequire()) // Force `require` to return covered files
 		.on('finish', function () {
+			// this does not include subfolders so fixtures wont be considered test folder
 			gulp.src(['./tests/*.js'], {read: false})
 				.pipe(mocha())
 				.pipe(istanbul.writeReports()) // Creating the reports after tests ran
