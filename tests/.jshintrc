@@ -1,0 +1,8 @@
+{
+	"extends": "../.jshintrc",
+	"globals": {
+		"include": false
+	},
+	"mocha": true,
+	"esversion": 6
+}

@@ -36,7 +36,7 @@ describe('Di', function () {
 		return injector.get('simpleValue')
 			.then(function (val) {
 				assert.equal(val, 'hello', 'it should return the value of simpleValue when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a object value and get the value in async mode', function () {
@@ -47,7 +47,7 @@ describe('Di', function () {
 		return injector.get('objectValue')
 			.then(function (val) {
 				assert.deepEqual(val, obj, 'it should return the value of objectValue when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a array value and get the value in async mode', function () {
@@ -58,20 +58,20 @@ describe('Di', function () {
 		return injector.get('arrayValue')
 			.then(function (val) {
 				assert.deepEqual(val, arr, 'it should return the value of arrayValue when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a array value when a func is in the array but isValue=true and get the value in async mode', function () {
 		var injector = new Di();
 		var arr = [function () {
-			return 'world'
+			return 'world';
 		}];
 		injector.set('arrayValue', arr, true);
 
 		return injector.get('arrayValue')
 			.then(function (val) {
 				assert.deepEqual(val, arr, 'it should return the value of arrayValue when resolving the promise');
-			})
+			});
 	});
 
 	it('should allow for modules using a class and no contructro', function () {
@@ -131,14 +131,14 @@ describe('Di', function () {
 	it('should create a value with provided constructor in the array and get the value in async mode', function () {
 		var injector = new Di();
 		var arr = [function () {
-			this.hello = 'world'
+			this.hello = 'world';
 		}];
 		injector.set('arrayConstructor', arr);
 
 		return injector.get('arrayConstructor')
 			.then(function (val) {
 				assert.deepEqual(val.hello, 'world', 'it should return the value of arrayConstructor when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a value with provided constructor with no array and get the value in async mode', function () {
@@ -151,7 +151,7 @@ describe('Di', function () {
 		return injector.get('plainConstructor')
 			.then(function (val) {
 				assert.deepEqual(val.hello, 'world', 'it should return the value of plainConstructor when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a async value with provided constructor get the resolved value in async mode', function () {
@@ -175,11 +175,9 @@ describe('Di', function () {
 				return injector.get('asyncValue')
 					.then(function (val) {
 						assert.deepEqual(val, 'hello async', 'it should return the value of asyncValue when resolving the promise');
-					})
-			})
+					});
+			});
 	});
-
-	it('should use the initialize object constructor only when the options is enabled')
 
 	it('should create a value with provided object constructor, resolve the dependencies using .$inject method', function () {
 		var injector = new Di({
@@ -253,7 +251,7 @@ describe('Di', function () {
 		return injector.get('classWithDependencies')
 			.then(function (instance) {
 				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a value with provided function constructor and resolve the dependencies using .$inject method', function () {
@@ -272,7 +270,7 @@ describe('Di', function () {
 		return injector.get('functionWithDependencies')
 			.then(function (instance) {
 				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a value with provided class constructor and resolve the dependencies using argument toString parsing', function () {
@@ -291,7 +289,7 @@ describe('Di', function () {
 		return injector.get('classWithDependencies')
 			.then(function (instance) {
 				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a value with provided function constructor and resolve the dependencies using argument toString parsing', function () {
@@ -308,7 +306,7 @@ describe('Di', function () {
 		return injector.get('functionWithDependencies')
 			.then(function (instance) {
 				assert.deepEqual(instance.name, 'hello world', 'it should return the value of withDependencies when resolving the promise');
-			})
+			});
 	});
 
 	it('should allow to disable pathSplitting when injecting using argument toString parsing', function () {
@@ -375,7 +373,7 @@ describe('Di', function () {
 		return injector.get('withDependencies')
 			.then(function (val) {
 				assert.deepEqual(val.value, 'hello world', 'it should return the value of withDependencies when resolving the promise');
-			})
+			});
 	});
 
 	it('should create a value with provided array constructor, resolve the async dependencies and get the value in async mode', function () {
@@ -398,7 +396,7 @@ describe('Di', function () {
 		return injector.get('withAsyncDependencies')
 			.then(function (val) {
 				assert.deepEqual(val.value, 'hello async world', 'it should return the value of withAsyncDependencies when resolving the promise');
-			})
+			});
 	});
 
 	describe('createChild', function () {
@@ -652,11 +650,6 @@ describe('Di', function () {
 		it('should allow for loose scope and setScope', function () {
 			var injector = new Di({
 				types: {
-					'typeFactory': {
-						singleton: true,
-						looseScope: true,
-						scope: '/project/'
-					},
 					'value': {
 						'singleton': true,
 						'scope': '/project/',
@@ -668,10 +661,6 @@ describe('Di', function () {
 						}
 					}
 				}
-			});
-
-			var childInjector = injector.createChild({
-				$scopeName: 'project'
 			});
 
 			injector.set('value', 'MyValue', 'hello');
@@ -805,7 +794,7 @@ describe('Di', function () {
 			});
 			class testClass {
 				constructor() {
-					this.value = 'hello'
+					this.value = 'hello';
 				}
 			}
 			testClass.$type = 'testType';
@@ -956,7 +945,7 @@ describe('Di', function () {
 			var run = function () {
 				injector.set('unknownType', 'simpleValue', 'hello');
 			};
-			assert.throws(run, Error, "Type unknownType is not defined");
+			assert.throws(run, Error, 'Type unknownType is not defined');
 
 
 		});
@@ -1016,7 +1005,7 @@ describe('Di', function () {
 					}
 				});
 			};
-			assert.throws(run, Error, "Factory unknownFactory is not defined");
+			assert.throws(run, Error, 'Factory unknownFactory is not defined');
 
 		});
 
@@ -1281,7 +1270,7 @@ describe('Di', function () {
 					assert(controller2.name !== 'hello');
 				});
 
-		})
+		});
 
 	});
 
@@ -1624,7 +1613,7 @@ describe('Di', function () {
 				});
 		});
 
-		it('should not run factory method "require module" more than once', function(){
+		it('should not run factory method "require module" more than once', function () {
 			var injector = new Di({
 				types: {
 					type1: {
@@ -1649,7 +1638,7 @@ describe('Di', function () {
 					injector.get('value1'),
 					injector.get('value2')
 				])
-				.spread(function(value1, value2){
+				.spread(function (value1, value2) {
 					assert.equal(value1, value2);
 				});
 
@@ -1666,10 +1655,10 @@ describe('Di', function () {
 	});
 
 	describe('Sanbox', function () {
-		it('should do some simple sinon tests', function(){
+		it('should do some simple sinon tests', function () {
 			var obj = {
 				name: 'john',
-				getName: function(){
+				getName: function () {
 					return this.name;
 				}
 			};
@@ -1678,7 +1667,7 @@ describe('Di', function () {
 			var sandbox = sinon.sandbox.create();
 
 			// test creating a method stub
-			stub = sandbox.stub(obj, 'getName', function(){
+			stub = sandbox.stub(obj, 'getName', function () {
 				return 'alex';
 			});
 			res = obj.getName();
@@ -1712,22 +1701,23 @@ describe('Di', function () {
 			sandbox.restore();
 
 			// use preMadeSpy as sanbox.spy at a later time (this is a test on how to implement async spy)
-			var spy = sinon.spy();
+			spy = sinon.spy();
 			var original = obj.getName;
-			sandbox.stub(obj, 'getName', function(){
+			sandbox.stub(obj, 'getName', function () {
 				spy.apply(spy, arguments);
 				return original.apply(obj, arguments);
 			});
-			var result = obj.getName();
+			var result;
+			result = obj.getName();
 			assert(spy.calledOnce);
-			var result = obj.getName();
+			result = obj.getName();
 			assert(spy.calledTwice);
 			assert.equal(result, 'john');
 
 
 		});
 
-		it('should check that when 2 child injectors have a module that shares name the stub is not applied to both (which it is now)', function(){
+		it('should check that when 2 child injectors have a module that shares name the stub is not applied to both (which it is now)', function () {
 
 			var injector = new Di({
 				types: {
@@ -1741,24 +1731,24 @@ describe('Di', function () {
 			var child2 = injector.createChild();
 
 			child1.controller('controller', {
-				getName: function(){
+				getName: function () {
 					return 'originalName';
 				},
-				getType: function(){
+				getType: function () {
 					return 'originalType';
 				}
 			});
 
 			child2.controller('controller', {
-				getName: function(){
+				getName: function () {
 					return 'originalName';
 				},
-				getType: function(){
+				getType: function () {
 					return 'originalType';
 				}
 			});
 
-			child1.stub('controller', 'getName', function(){
+			child1.stub('controller', 'getName', function () {
 				return 'stubbedName';
 			});
 			var spy = child1.spy('controller', 'getType');
@@ -1768,7 +1758,7 @@ describe('Di', function () {
 					child1.get('controller'),
 					child2.get('controller')
 				])
-				.spread(function(controller1, controller2){
+				.spread(function (controller1, controller2) {
 					assert.equal(controller1.getName(), 'stubbedName');
 					assert.equal(controller2.getName(), 'originalName');
 
@@ -1788,7 +1778,7 @@ describe('Di', function () {
 				});
 		});
 
-		it('should get spies/stubs from parent injectors if not in current', function(){
+		it('should get spies/stubs from parent injectors if not in current', function () {
 			var injector = new Di({
 				types: {
 					controller: {
@@ -1800,22 +1790,22 @@ describe('Di', function () {
 			var child = injector.createChild();
 
 			child.controller('controller', {
-				getName: function(){
+				getName: function () {
 					return 'originalName';
 				},
-				getType: function(){
+				getType: function () {
 					return 'originalType';
 				}
 			});
 
 
-			injector.stub('controller', 'getName', function(){
+			injector.stub('controller', 'getName', function () {
 				return 'stubbedName';
 			});
 			var spy = injector.spy('controller', 'getType');
 
 			return child.get('controller')
-				.then(function(controller){
+				.then(function (controller) {
 					assert.equal(controller.getName(), 'stubbedName');
 					controller.getType();
 					assert(spy.calledOnce);
@@ -1884,6 +1874,7 @@ describe('Di', function () {
 				getHttp() {
 					return 'realResponse';
 				}
+
 				postHttp() {
 				}
 			});
@@ -1901,7 +1892,7 @@ describe('Di', function () {
 					// make sure it doesn't try to double wrap method
 					return injector.get('controller');
 				})
-				.then(function(controllerResponse){
+				.then(function (controllerResponse) {
 					assert.equal(controllerResponse, 'realResponse', 'controller should return the real response');
 					assert(getHttpSpy.calledTwice, 'it should have called the getHttpSpy method once');
 				})
@@ -1927,7 +1918,7 @@ describe('Di', function () {
 			injector.set('request', function () {
 				return function getHttp() {
 					Promise.resolve('realResponse');
-				}
+				};
 			});
 
 			injector.controller('controller', function (request) {
@@ -1962,7 +1953,7 @@ describe('Di', function () {
 			injector.set('request', function () {
 				return function getHttp() {
 					return Promise.resolve('realResponse');
-				}
+				};
 			});
 
 			injector.controller('controller', function (request) {
@@ -2076,7 +2067,7 @@ describe('Di', function () {
 			injector.set('simpleMethod', function () {
 				return function () {
 					return 'realSimpleMethod';
-				}
+				};
 			});
 
 			injector.set('request', class {
@@ -2155,7 +2146,7 @@ describe('Di', function () {
 				.spread(function (classProductModel1, classProductModel2) {
 					assert.equal(classProductModel1.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
 					assert.equal(classProductModel2.name.toString(), 'ClassProductsModel', 'it should load the ClassProductsModel class without instantiating it');
-				})
+				});
 		});
 		it('should default to loading using require when it can not find a module', function () {
 			var injector = new Di();

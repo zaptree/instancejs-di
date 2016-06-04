@@ -1,0 +1,15 @@
+{
+	"bitwise": false,
+	"strict": true,
+	"undef": true,
+	"forin": true,
+	"unused": true,
+	"eqeqeq": true,
+	"freeze": true,
+	"newcap": true,
+	"noarg": true,
+	"noempty": true,
+	"nonbsp": true,
+	"quotmark": true,
+	"node": true
+}

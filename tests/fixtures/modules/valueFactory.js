@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = function(){
-	return function(module, dependencies){
+	return function(module){
 		return module.$constructor + ' world';
-	}
+	};
 };
