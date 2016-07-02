@@ -1,5 +1,5 @@
 {
-  "name": "instance-di",
+  "name": "instancejs-di",
   "version": "0.0.1",
   "description": "Node Dependency Injection",
   "main": "index.js",
