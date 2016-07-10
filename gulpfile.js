@@ -10,8 +10,8 @@ var folders = {
 	lint: ['lib/**/*.js', 'tests/**/*.js', 'index.js']
 };
 
-gulp.task('test', ['lint'], function () {
-	return gulp.src(folders.test)
+gulp.task('test', ['lint'], function (done) {
+	gulp.src(folders.test)
 		.pipe(istanbul()) // Covering files
 		.pipe(istanbul.hookRequire()) // Force `require` to return covered files
 		.on('finish', function () {
@@ -19,7 +19,8 @@ gulp.task('test', ['lint'], function () {
 			gulp.src(['./tests/*.test.js'], {read: false})
 				.pipe(mocha())
 				.pipe(istanbul.writeReports()) // Creating the reports after tests ran
-				.pipe(istanbul.enforceThresholds({thresholds: {global: 100}})); // Enforce a coverage of at least 100%
+				.pipe(istanbul.enforceThresholds({thresholds: {global: 100}})) // Enforce a coverage of at least 100%
+				.on('finish', done);
 		});
 
 });
